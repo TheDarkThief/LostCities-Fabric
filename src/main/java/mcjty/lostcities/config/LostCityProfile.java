@@ -7,11 +7,12 @@ import mcjty.lostcities.LostCities;
 import mcjty.lostcities.api.ILostCityProfile;
 import mcjty.lostcities.setup.ModSetup;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.BlockState;
-import net.minecraftforge.registries.ForgeRegistryKeys;
+
 
 public class LostCityProfile implements ILostCityProfile {
 
@@ -529,7 +530,7 @@ public class LostCityProfile implements ILostCityProfile {
 
     public BlockState getLiquidBlock() {
         if (liquidBlock == null) {
-            Block b = ForgeRegistryKeys.BLOCKS.getValue(Identifier.of(LIQUID_BLOCK));
+            Block b = Registries.BLOCK.get(Identifier.of(LIQUID_BLOCK));
             if (b == null) {
                 ModSetup.getLogger().error("Bad liquid block: {}!", LIQUID_BLOCK);
                 liquidBlock = Blocks.WATER.getDefaultState();
@@ -542,7 +543,7 @@ public class LostCityProfile implements ILostCityProfile {
 
     public BlockState getBaseBlock() {
         if (baseBlock == null) {
-            Block b = ForgeRegistryKeys.BLOCKS.getValue(Identifier.of(BASE_BLOCK));
+            Block b = Registries.BLOCK.get(Identifier.of(BASE_BLOCK));
             if (b == null) {
                 ModSetup.getLogger().error("Bad base block: {}!", BASE_BLOCK);
                 baseBlock = Blocks.STONE.getDefaultState();
