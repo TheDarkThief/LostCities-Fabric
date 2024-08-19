@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "lost-cities",
+	"id": "lostcities",
 	"version": "${version}",
 	"name": "Lost Cities Fabric Edition",
 	"description": ":D",
@@ -23,17 +23,14 @@
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
-		{
-			"config": "modid.client.mixins.json",
-			"environment": "client"
-		}
+		"modid.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.15.11",
 		"minecraft": "~1.21",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"yet_another_config_lib_v3": ">=3.5.0+1.21-fabric"
 	},
 	"suggests": {
 		"JEI": "*"

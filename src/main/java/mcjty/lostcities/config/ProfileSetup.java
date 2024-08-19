@@ -4,7 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import mcjty.lostcities.LostCities;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.fabricmc.loader.api.FabricLoader;
+
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -380,7 +381,7 @@ public class ProfileSetup {
     }
 
     public static void setupProfiles() {
-        Path path = FMLPaths.CONFIGDIR.get();
+        Path path = FabricLoader.getInstance().getConfigDir();
         Path profileDir = Paths.get(path.toString(), "lostcities/profiles");
 
         LostCities.getLogger().info("Creating standard profiles into 'config/lostcities/profiles'");

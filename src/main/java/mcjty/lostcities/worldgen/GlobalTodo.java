@@ -33,7 +33,7 @@ public class GlobalTodo {
     private final static Map<RegistryKey<World>, GlobalTodo> instances = new HashMap<>();
 
     public static GlobalTodo get(World world) {
-        return instances.computeIfAbsent(world.dimension(), k -> new GlobalTodo());
+        return instances.computeIfAbsent(world.getRegistryKey(), k -> new GlobalTodo());
     }
 
     public void addTodo(BlockPos pos, Consumer<ServerWorld> code) {
