@@ -4,25 +4,25 @@ import mcjty.lostcities.LostCities;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.config.ProfileSetup;
 import mcjty.lostcities.setup.Config;
-import mcjty.lostcities.setup.ForgeEventHandlers;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.WorldGenRegion;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.minecraftforge.common.Tags;
+import mcjty.lostcities.setup.FabricEventHandlers;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.ChunkRegion;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.registry.tag.BiomeTags;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.util.FeatureContext;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LostCityFeature extends Feature<NoneFeatureConfiguration> {
+public class LostCityFeature extends Feature<DefaultFeatureConfig> {
 
     /**
      * On dedicated servers the dimensionInfo cache is no problem. The server starts only once
@@ -31,27 +31,27 @@ public class LostCityFeature extends Feature<NoneFeatureConfiguration> {
      * exits the world and creates a new one we keep a static flag which is incremented whenever
      * the player exits the world. That is then used to help clear this cache
      */
-    private final Map<ResourceKey<Level>, IDimensionInfo> dimensionInfo = new HashMap<>();
+    private final Map<RegistryKey<World>, IDimensionInfo> dimensionInfo = new HashMap<>();
     public static int globalDimensionInfoDirtyCounter = 0;
     private int dimensionInfoDirtyCounter = -1;
 
     public LostCityFeature() {
-        super(NoneFeatureConfiguration.CODEC);
+        super(DefaultFeatureConfig.CODEC);
     }
 
     private static final long[] times = new long[1000];
     private static long totalCnt = 0;
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        WorldGenLevel level = context.level();
-        if (level instanceof WorldGenRegion) {
+    public boolean generate(FeatureContext<DefaultFeatureConfig> context) {
+        StructureWorldAccess level = context.getWorld();
+        if (level instanceof ChunkRegion) {
             IDimensionInfo diminfo = getDimensionInfo(level);
             if (diminfo != null) {
-                WorldGenRegion region = (WorldGenRegion) level;
-                ChunkPos center = region.getCenter();
-                Holder<Biome> biome = region.getBiome(center.getMiddleBlockPosition(60));
-                if (biome.is(Tags.Biomes.IS_VOID)) {
+                ChunkRegion region = (ChunkRegion) level;
+                ChunkPos center = region.getCenterPos();
+                RegistryEntry<Biome> biome = region.getBiome(center.getCenterAtY(60));
+                if (biome.isIn(BiomeTags.IS_END)) {
                     return false;
                 }
 
@@ -73,12 +73,12 @@ public class LostCityFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     @Nullable
-    public IDimensionInfo getDimensionInfo(WorldGenLevel world) {
+    public IDimensionInfo getDimensionInfo(StructureWorldAccess world) {
         if (globalDimensionInfoDirtyCounter != dimensionInfoDirtyCounter) {
             // Force clear of cache
             cleanUp();
         }
-        ResourceKey<Level> type = world.getLevel().dimension();
+        RegistryKey<World> type = world.toServerWorld().getRegistryKey();
         String profileName = Config.getProfileForDimension(type);
         if (profileName != null) {
             if (!dimensionInfo.containsKey(type)) {
@@ -97,8 +97,8 @@ public class LostCityFeature extends Feature<NoneFeatureConfiguration> {
 
     public void cleanUp() {
         LostCities.lostCitiesImp.cleanUp();
-        ForgeEventHandlers.cleanUp();
-        AssetRegistries.reset();
+        FabricEventHandlers.cleanUp();
+        AssetRegistryKeys.reset();
         dimensionInfo.clear();
         dimensionInfoDirtyCounter = globalDimensionInfoDirtyCounter;
     }

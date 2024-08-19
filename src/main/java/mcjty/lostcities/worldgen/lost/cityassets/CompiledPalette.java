@@ -2,11 +2,11 @@ package mcjty.lostcities.worldgen.lost.cityassets;
 
 import mcjty.lostcities.LostCities;
 import mcjty.lostcities.worldgen.LostCityTerrainFeature;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
@@ -143,7 +143,7 @@ public class CompiledPalette {
                 return randomBlocks[rand.nextInt(128)];
             }
         } catch (Exception e) {
-            LostCities.LOGGER.log(Level.ERROR, e);
+            LostCities.LOGGER.log(World.ERROR, e);
             return null;
         }
 

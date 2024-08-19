@@ -2,9 +2,9 @@ package mcjty.lostcities.worldgen.lost;
 
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.world.level.biome.Biome;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.world.biome.Biome;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +13,7 @@ public class BiomeInfo {
 
     private static final Map<ChunkCoord, BiomeInfo> BIOME_INFO_MAP = new HashMap<>();
 
-    private Holder<Biome> mainBiome;
+    private RegistryEntry<Biome> mainBiome;
 
     public static void cleanCache() {
         BIOME_INFO_MAP.clear();
@@ -30,7 +30,7 @@ public class BiomeInfo {
         return BIOME_INFO_MAP.get(coord);
     }
 
-    public Holder<Biome> getMainBiome() {
+    public RegistryEntry<Biome> getMainBiome() {
         return mainBiome;
     }
 }

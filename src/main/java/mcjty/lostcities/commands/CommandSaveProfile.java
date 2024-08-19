@@ -11,33 +11,33 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import mcjty.lostcities.config.ProfileSetup;
 import mcjty.lostcities.config.LostCityProfile;
-import mcjty.lostcities.varia.ComponentFactory;
-import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import mcjty.lostcities.varia.TextFactory;
+import net.minecraft.util.Formatting;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
-public class CommandSaveProfile implements Command<CommandSourceStack> {
+public class CommandSaveProfile implements Command<ServerCommandSource> {
 
     private static final CommandSaveProfile CMD = new CommandSaveProfile();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("saveprofile")
-                .requires(cs -> cs.hasPermission(0))
-                .then(Commands.argument("profile", StringArgumentType.word())
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("saveprofile")
+                .requires(cs -> cs.hasPermissionLevel(0))
+                .then(CommandManager.argument("profile", StringArgumentType.word())
                     .executes(CMD));
     }
 
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         String name = context.getArgument("profile", String.class);
         LostCityProfile profile = ProfileSetup.STANDARD_PROFILES.get(name);
         if (profile == null) {
-            context.getSource().sendSuccess(() -> ComponentFactory.literal(ChatFormatting.RED + "Could not find profile '" + name + "'!"), true);
+            context.getSource().sendFeedback(() -> TextFactory.literal(Formatting.RED + "Could not find profile '" + name + "'!"), true);
             return 0;
         }
         JsonObject jsonObject = profile.toJson(false);
@@ -48,10 +48,10 @@ public class CommandSaveProfile implements Command<CommandSourceStack> {
                 writer.flush();
             }
         } catch (FileNotFoundException e) {
-            context.getSource().sendSuccess(() -> ComponentFactory.literal(ChatFormatting.RED + "Error saving profile '" + name + "'!"), true);
+            context.getSource().sendFeedback(() -> TextFactory.literal(Formatting.RED + "Error saving profile '" + name + "'!"), true);
             return 0;
         }
-        context.getSource().sendSuccess(() -> ComponentFactory.literal(ChatFormatting.GREEN + "Saved profile '" + name + "'!"), true);
+        context.getSource().sendFeedback(() -> TextFactory.literal(Formatting.GREEN + "Saved profile '" + name + "'!"), true);
         return 0;
     }
 }

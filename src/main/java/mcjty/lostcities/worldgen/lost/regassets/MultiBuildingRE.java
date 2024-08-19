@@ -2,7 +2,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class MultiBuildingRE implements IAsset<MultiBuildingRE> {
                     Codec.list(Codec.list(Codec.STRING)).fieldOf("buildings").forGetter(l -> l.buildings)
             ).apply(instance, MultiBuildingRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final int dimX;
     private final int dimZ;
     private final List<List<String>> buildings;
@@ -40,13 +40,13 @@ public class MultiBuildingRE implements IAsset<MultiBuildingRE> {
     }
 
     @Override
-    public MultiBuildingRE setRegistryName(ResourceLocation name) {
+    public MultiBuildingRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

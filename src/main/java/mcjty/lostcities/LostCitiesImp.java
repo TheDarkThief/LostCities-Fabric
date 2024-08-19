@@ -7,18 +7,18 @@ import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.WorldGenLevel;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.World;
+import net.minecraft.world.StructureWorldAccess;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
 public class LostCitiesImp implements ILostCities {
 
-    private final Map<ResourceKey<Level>, LostCityInformation> info = new HashMap<>();
+    private final Map<RegistryKey<World>, LostCityInformation> info = new HashMap<>();
 
     public void cleanUp() {
         info.clear();
@@ -26,20 +26,20 @@ public class LostCitiesImp implements ILostCities {
 
     @Nullable
     @Override
-    public ILostCityInformation getLostInfo(Level world) {
-        IDimensionInfo dimensionInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo((WorldGenLevel) world);
+    public ILostCityInformation getLostInfo(World world) {
+        IDimensionInfo dimensionInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo((StructureWorldAccess) world);
         if (dimensionInfo != null) {
-            if (!info.containsKey(world.dimension())) {
+            if (!info.containsKey(world.getRegistryKey())) {
                 LostCityInformation gen = new LostCityInformation(dimensionInfo);
-                info.put(world.dimension(), gen);
+                info.put(world.getRegistryKey(), gen);
             }
-            return info.get(world.dimension());
+            return info.get(world.getRegistryKey());
         }
         return null;
     }
 
     @Override
-    public void registerDimension(ResourceKey<Level> key, String profile) {
+    public void registerDimension(RegistryKey<World> key, String profile) {
         Config.registerLostCityDimension(key, profile);
     }
 
@@ -81,17 +81,17 @@ public class LostCitiesImp implements ILostCities {
 
         @Override
         public ILostCityAssetRegistry<ILostCityBuilding> getBuildings() {
-            return AssetRegistries.BUILDINGS.cast();
+            return AssetRegistryKeys.BUILDINGS.cast();
         }
 
         @Override
         public ILostCityAssetRegistry<ILostCityMultiBuilding> getMultiBuildings() {
-            return AssetRegistries.MULTI_BUILDINGS.cast();
+            return AssetRegistryKeys.MULTI_BUILDINGS.cast();
         }
 
         @Override
         public ILostCityAssetRegistry<ILostCityCityStyle> getCityStyles() {
-            return AssetRegistries.CITYSTYLES.cast();
+            return AssetRegistryKeys.CITYSTYLES.cast();
         }
     }
 }

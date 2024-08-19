@@ -3,7 +3,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.PaletteEntry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public class PaletteRE implements IAsset<PaletteRE> {
                     Codec.list(PaletteEntry.CODEC).fieldOf("palette").forGetter(l -> l.paletteEntries)
             ).apply(instance, PaletteRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final List<PaletteEntry> paletteEntries = new ArrayList<>();
 
     public PaletteRE(List<PaletteEntry> entries) {
@@ -31,13 +31,13 @@ public class PaletteRE implements IAsset<PaletteRE> {
     }
 
     @Override
-    public PaletteRE setRegistryName(ResourceLocation name) {
+    public PaletteRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

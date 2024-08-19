@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "LostCities",
+	"id": "lost-cities",
 	"version": "${version}",
 	"name": "Lost Cities Fabric Edition",
 	"description": ":D",
@@ -19,7 +19,7 @@
 			"mcjty.lostcites.LostCities"
 		],
 		"client": [
-			"mcjty.lostcites.LostCities"
+			"mcjty.lostcites.LostCitiesClient"
 		]
 	},
 	"mixins": [

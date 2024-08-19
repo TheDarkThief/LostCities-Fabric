@@ -3,7 +3,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class CityStyleRE implements IAsset<CityStyleRE> {
                     Selectors.CODEC.optionalFieldOf("selectors").forGetter(l -> Optional.ofNullable(l.selectors))
             ).apply(instance, CityStyleRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
 
     private final Float explosionChance;
     private final String style;
@@ -122,13 +122,13 @@ public class CityStyleRE implements IAsset<CityStyleRE> {
     }
 
     @Override
-    public CityStyleRE setRegistryName(ResourceLocation name) {
+    public CityStyleRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

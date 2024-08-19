@@ -4,17 +4,17 @@ import mcjty.lostcities.api.ILostSphere;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import mcjty.lostcities.worldgen.lost.cityassets.CityStyle;
 import mcjty.lostcities.worldgen.lost.cityassets.PredefinedCity;
 import mcjty.lostcities.worldgen.lost.cityassets.PredefinedSphere;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.BlockState;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -23,7 +23,7 @@ public class CitySphere implements ILostSphere {
 
     private static final Map<ChunkCoord, CitySphere> CITY_SPHERE_CACHE = new HashMap<>();
 
-    public static final CitySphere EMPTY = new CitySphere(new ChunkCoord(Level.OVERWORLD, 0, 0), 0.0f, new BlockPos(0, 0, 0), false);
+    public static final CitySphere EMPTY = new CitySphere(new ChunkCoord(World.OVERWORLD, 0, 0), 0.0f, new BlockPos(0, 0, 0), false);
 
     private final ChunkCoord center;
     private final BlockPos centerPos;
@@ -35,9 +35,9 @@ public class CitySphere implements ILostSphere {
     private boolean monorailWestCandidate;
     private boolean monorailEastCandidate;
 
-    private BlockState glassBlock = Blocks.AIR.defaultBlockState();
-    private BlockState baseBlock = Blocks.AIR.defaultBlockState();
-    private BlockState sideBlock = Blocks.AIR.defaultBlockState();
+    private BlockState glassBlock = Blocks.AIR.getDefaultState();
+    private BlockState baseBlock = Blocks.AIR.getDefaultState();
+    private BlockState sideBlock = Blocks.AIR.getDefaultState();
 
     private CitySphere(ChunkCoord center, float radius, BlockPos centerPos, boolean enabled) {
         this.enabled = enabled;
@@ -47,7 +47,7 @@ public class CitySphere implements ILostSphere {
     }
 
     public static void initSphere(CitySphere sphere, IDimensionInfo provider) {
-        if (sphere.getBaseBlock() != Blocks.AIR.defaultBlockState()) {
+        if (sphere.getBaseBlock() != Blocks.AIR.getDefaultState()) {
             return;
         }
 
@@ -395,10 +395,10 @@ public class CitySphere implements ILostSphere {
      * Given a chunk coordinate return the nearest city sphere that affects this chunk. This can return city
      * spheres that are disabled so always test for that! If this returns EMPTY there is no sphere at all
      */
-    @Nonnull
+    @NotNull
     public static synchronized CitySphere getCitySphere(ChunkCoord coord, IDimensionInfo provider) {
         if (!CITY_SPHERE_CACHE.containsKey(coord)) {
-            for (PredefinedSphere predef : AssetRegistries.PREDEFINED_SPHERES.getIterable()) {
+            for (PredefinedSphere predef : AssetRegistryKeys.PREDEFINED_SPHERES.getIterable()) {
                 if (predef.getDimension() == provider.getType()) {
                     if (intersectChunkWithSphere(coord.chunkX(), coord.chunkZ(), predef.getRadius(), new BlockPos(predef.getCenterX(), 0, predef.getCenterZ()))) {
                         ChunkCoord center = new ChunkCoord(provider.getType(), predef.getChunkX(), predef.getChunkZ());

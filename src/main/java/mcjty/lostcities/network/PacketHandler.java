@@ -2,7 +2,7 @@ package mcjty.lostcities.network;
 
 
 import mcjty.lostcities.LostCities;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 
@@ -24,7 +24,7 @@ public class PacketHandler {
     }
 
     public static void registerMessages(String channelName) {
-        INSTANCE = NetworkRegistry.newSimpleChannel(new ResourceLocation(LostCities.MODID, channelName), () -> "1.0", s -> true, s -> true);
+        INSTANCE = NetworkRegistry.newSimpleChannel(Identifier.of(LostCities.MODID, channelName), () -> "1.0", s -> true, s -> true);
         registerMessages();
     }
 

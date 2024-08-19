@@ -1,10 +1,10 @@
 package mcjty.lostcities.varia;
 
 import mcjty.lostcities.worldgen.lost.Orientation;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.World;
 
-public record ChunkCoord(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
+public record ChunkCoord(RegistryKey<World> dimension, int chunkX, int chunkZ) {
 
     public ChunkCoord offset(int dx, int dz) {
         return new ChunkCoord(dimension, chunkX + dx, chunkZ + dz);

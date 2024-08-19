@@ -1,6 +1,6 @@
 package mcjty.lostcities.worldgen.lost;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 public enum Direction {
     XMIN,
@@ -33,7 +33,7 @@ public enum Direction {
         };
     }
 
-    @Nonnull
+    @NotNull
     public BuildingInfo get(BuildingInfo info) {
         return switch (this) {
             case XMIN -> info.getXmin();

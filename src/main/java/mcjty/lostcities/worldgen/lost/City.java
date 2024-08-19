@@ -8,9 +8,9 @@ import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.cityassets.*;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedBuilding;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedStreet;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.World;
+import net.minecraft.world.StructureWorldAccess;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -27,7 +27,7 @@ public class City {
     private static Map<ChunkCoord, PredefinedStreet> predefinedStreetMap = null;
 
     // If cityChance == -1 then this is used to control where cities are
-    private static final Map<ResourceKey<Level>, CityRarityMap> CITY_RARITY_MAP = new HashMap<>();
+    private static final Map<RegistryKey<World>, CityRarityMap> CITY_RARITY_MAP = new HashMap<>();
     private static final Map<ChunkCoord, CityStyle> CITY_STYLE_MAP = new HashMap<>();
     private static Map<ChunkCoord, PreDefBuildingOffset> OCCUPIED_CHUNKS_BUILDING = null;
     private static Map<ChunkCoord, PredefinedStreet> OCCUPIED_CHUNKS_STREET = null;
@@ -42,14 +42,14 @@ public class City {
         OCCUPIED_CHUNKS_STREET = null;
     }
 
-    public static CityRarityMap getCityRarityMap(ResourceKey<Level> level, long seed, double scale, double offset, double innerScale) {
+    public static CityRarityMap getCityRarityMap(RegistryKey<World> level, long seed, double scale, double offset, double innerScale) {
         return CITY_RARITY_MAP.computeIfAbsent(level, k -> new CityRarityMap(seed, scale, offset, innerScale));
     }
 
     public static PredefinedCity getPredefinedCity(ChunkCoord coord) {
         if (predefinedCityMap == null) {
             predefinedCityMap = new HashMap<>();
-            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
                 predefinedCityMap.put(new ChunkCoord(city.getDimension(), city.getChunkX(), city.getChunkZ()), city);
             }
         }
@@ -88,7 +88,7 @@ public class City {
                 PredefinedBuilding pb = entry.getValue();
                 ChunkCoord root = entry.getKey();
                 if (pb.multi()) {
-                    MultiBuilding building = AssetRegistries.MULTI_BUILDINGS.getOrThrow(provider.getWorld(), pb.building());
+                    MultiBuilding building = AssetRegistryKeys.MULTI_BUILDINGS.getOrThrow(provider.getWorld(), pb.building());
                     // Add all occupied chunkcoords for the building to the occupied set
                     for (int x = 0 ; x < building.getDimX() ; x++) {
                         for (int z = 0 ; z < building.getDimZ() ; z++) {
@@ -102,7 +102,7 @@ public class City {
         }
         if (OCCUPIED_CHUNKS_STREET == null) {
             OCCUPIED_CHUNKS_STREET = new HashMap<>();
-            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
                 for (PredefinedStreet street : city.getPredefinedStreets()) {
                     OCCUPIED_CHUNKS_STREET.put(new ChunkCoord(city.getDimension(),
                             city.getChunkX() + street.relChunkX(), city.getChunkZ() + street.relChunkZ()), street);
@@ -114,7 +114,7 @@ public class City {
     private static void calculateMap() {
         if (predefinedBuildingMap == null) {
             predefinedBuildingMap = new HashMap<>();
-            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
                 for (PredefinedBuilding building : city.getPredefinedBuildings()) {
                     predefinedBuildingMap.put(new ChunkCoord(city.getDimension(),
                             city.getChunkX() + building.relChunkX(), city.getChunkZ() + building.relChunkZ()), building);
@@ -126,7 +126,7 @@ public class City {
     public static PredefinedStreet getPredefinedStreet(ChunkCoord coord) {
         if (predefinedStreetMap == null) {
             predefinedStreetMap = new HashMap<>();
-            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
                 for (PredefinedStreet street : city.getPredefinedStreets()) {
                     predefinedStreetMap.put(new ChunkCoord(city.getDimension(),
                             city.getChunkX() + street.relChunkX(), city.getChunkZ() + street.relChunkZ()), street);
@@ -219,8 +219,8 @@ public class City {
         Random cityStyleRandom = new Random(provider.getSeed() + chunkZ * 593441843L + chunkX * 217645177L);
 
         if (profile.CITY_CHANCE < 0) {
-            WorldGenLevel world = provider.getWorld();
-            CityRarityMap rarityMap = getCityRarityMap(world.getLevel().dimension(), world.getSeed(),
+            StructureWorldAccess world = provider.getWorld();
+            CityRarityMap rarityMap = getCityRarityMap(world.toServerWorld().getRegistryKey(), world.getSeed(),
                     profile.CITY_PERLIN_SCALE, profile.CITY_PERLIN_OFFSET, profile.CITY_PERLIN_INNERSCALE);
             float factor = rarityMap.getCityFactor(chunkX, chunkZ);
             if (factor < profile.CITY_STYLE_THRESHOLD) {
@@ -261,11 +261,11 @@ public class City {
                 cityStyleName = fromList.getRight();
             }
         }
-        return AssetRegistries.CITYSTYLES.get(provider.getWorld(), cityStyleName);
+        return AssetRegistryKeys.CITYSTYLES.get(provider.getWorld(), cityStyleName);
     }
 
     public static float getCityFactor(ChunkCoord coord, IDimensionInfo provider, LostCityProfile profile) {
-        ResourceKey<Level> type = provider.getType();
+        RegistryKey<World> type = provider.getType();
         // If we have a predefined building here we force a high city factor
 
         PredefinedBuilding predefinedBuilding = getPredefinedBuildingAtTopLeft(coord);
@@ -319,7 +319,7 @@ public class City {
         }
 
         if (factor > 0.0001 && provider.getWorld() != null) {
-            WorldStyle worldStyle = AssetRegistries.WORLDSTYLES.get(provider.getWorld(), profile.getWorldStyle());
+            WorldStyle worldStyle = AssetRegistryKeys.WORLDSTYLES.get(provider.getWorld(), profile.getWorldStyle());
             float multiplier = worldStyle.getCityChanceMultiplier(provider, coord);
             factor *= multiplier;
         }

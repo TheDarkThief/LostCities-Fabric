@@ -5,8 +5,8 @@ import mcjty.lostcities.varia.Tools;
 import mcjty.lostcities.worldgen.lost.regassets.VariantRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.BlockEntry;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Identifier;
+import net.minecraft.block.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class Variant implements ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
     private final List<Pair<Integer, BlockState>> blocks = new ArrayList<>();
 
     public Variant(VariantRE object) {
@@ -34,7 +34,7 @@ public class Variant implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 

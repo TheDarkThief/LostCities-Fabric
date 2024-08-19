@@ -3,24 +3,24 @@ package mcjty.lostcities.worldgen;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.lost.cityassets.WorldStyle;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.World;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.biome.Biome;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Random;
 
 public interface IDimensionInfo {
-    void setWorld(WorldGenLevel world);
+    void setWorld(StructureWorldAccess world);
 
     long getSeed();
 
-    WorldGenLevel getWorld();
+    StructureWorldAccess getWorld();
 
-    ResourceKey<Level> getType();
+    RegistryKey<World> getType();
 
     LostCityProfile getProfile();
 
@@ -38,8 +38,8 @@ public interface IDimensionInfo {
 
 //    Biome[] getBiomes(int chunkX, int chunkZ);
 
-    Holder<Biome> getBiome(BlockPos pos);
+    RegistryEntry<Biome> getBiome(BlockPos pos);
 
     @Nullable
-    ResourceKey<Level> dimension();
+    RegistryKey<World> dimension();
 }

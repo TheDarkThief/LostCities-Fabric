@@ -6,15 +6,18 @@ import mcjty.lostcities.worldgen.lost.regassets.CityStyleRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
 import mcjty.lostcities.worldgen.lost.regassets.data.ObjectSelector;
 import mcjty.lostcities.worldgen.lost.regassets.data.StreetParts;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.CommonLevelAccessor;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.RegistryWorldView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Random;
 
 public class CityStyle implements ILostCityCityStyle {
 
-    private final ResourceLocation name;
+    private final Identifier name;
 
     private final Set<String> stuffTags = new HashSet<>();
 
@@ -135,7 +138,7 @@ public class CityStyle implements ILostCityCityStyle {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 
@@ -265,11 +268,11 @@ public class CityStyle implements ILostCityCityStyle {
     }
 
     @Override
-    public void init(CommonLevelAccessor level) {
+    public void init(RegistryWorldView level) {
         if (!resolveInherit) {
             resolveInherit = true;
             if (inherit != null) {
-                CityStyle inheritFrom = AssetRegistries.CITYSTYLES.getOrThrow(level, inherit);
+                CityStyle inheritFrom = AssetRegistryKeys.CITYSTYLES.getOrThrow(level, inherit);
                 if (style == null) {
                     style = inheritFrom.getStyle();
                 }
@@ -343,15 +346,6 @@ public class CityStyle implements ILostCityCityStyle {
                     sphereGlassBlock = inheritFrom.sphereGlassBlock;
                 }
             }
-        }
-    }
-
-    private static String getRandomFromList(RandomSource random, List<ObjectSelector> list) {
-        ObjectSelector fromList = Tools.getRandomFromList(random, list, ObjectSelector::factor);
-        if (fromList == null) {
-            return null;
-        } else {
-            return fromList.value();
         }
     }
 

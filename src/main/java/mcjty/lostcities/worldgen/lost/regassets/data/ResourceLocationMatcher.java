@@ -2,14 +2,14 @@ package mcjty.lostcities.worldgen.lost.regassets.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 import java.util.*;
 import java.util.function.Predicate;
 
-public class ResourceLocationMatcher implements Predicate<ResourceLocation> {
-    private final Set<ResourceLocation> ifAny;
-    private final Set<ResourceLocation> excluding;
+public class ResourceLocationMatcher implements Predicate<Identifier> {
+    private final Set<Identifier> ifAny;
+    private final Set<Identifier> excluding;
 
     public static final Codec<ResourceLocationMatcher> CODEC = RecordCodecBuilder.create(codec -> codec.group(
             Codec.STRING.listOf().optionalFieldOf("if_any").forGetter(ResourceLocationMatcher::getIfAny),
@@ -31,7 +31,7 @@ public class ResourceLocationMatcher implements Predicate<ResourceLocation> {
         if (ifAny == null || ifAny.isEmpty()) {
             return Optional.empty();
         } else {
-            return Optional.of(ifAny.stream().map(ResourceLocation::toString).toList());
+            return Optional.of(ifAny.stream().map(Identifier::toString).toList());
         }
     }
 
@@ -39,19 +39,19 @@ public class ResourceLocationMatcher implements Predicate<ResourceLocation> {
         if (excluding == null || excluding.isEmpty()) {
             return Optional.empty();
         } else {
-            return Optional.of(excluding.stream().map(ResourceLocation::toString).toList());
+            return Optional.of(excluding.stream().map(Identifier::toString).toList());
         }
     }
 
     public static final ResourceLocationMatcher ANY = new ResourceLocationMatcher(Optional.empty(), Optional.empty()) {
         @Override
-        public boolean test(ResourceLocation str) {
+        public boolean test(Identifier str) {
             return true;
         }
     };
 
     @Override
-    public boolean test(ResourceLocation rl) {
+    public boolean test(Identifier rl) {
         if (rl == null) {
             return false;
         }

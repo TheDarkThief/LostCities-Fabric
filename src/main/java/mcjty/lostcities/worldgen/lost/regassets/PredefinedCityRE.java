@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedBuilding;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedStreet;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class PredefinedCityRE implements IAsset<PredefinedCityRE> {
                     Codec.list(PredefinedStreet.CODEC).optionalFieldOf("streets").forGetter(l -> Optional.ofNullable(l.predefinedStreets))
             ).apply(instance, PredefinedCityRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
 
     private final String dimension;
     private final int chunkX;
@@ -77,13 +77,13 @@ public class PredefinedCityRE implements IAsset<PredefinedCityRE> {
     }
 
     @Override
-    public PredefinedCityRE setRegistryName(ResourceLocation name) {
+    public PredefinedCityRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

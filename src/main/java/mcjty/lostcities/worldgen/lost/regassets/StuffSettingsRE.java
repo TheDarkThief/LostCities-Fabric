@@ -4,8 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.BiomeMatcher;
 import mcjty.lostcities.worldgen.lost.regassets.data.BlockMatcher;
-import mcjty.lostcities.worldgen.lost.regassets.data.ResourceLocationMatcher;
-import net.minecraft.resources.ResourceLocation;
+import mcjty.lostcities.worldgen.lost.regassets.data.IdentifierMatcher;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -28,10 +28,10 @@ public class StuffSettingsRE implements IAsset<StuffSettingsRE> {
                     BiomeMatcher.CODEC.optionalFieldOf("biomes").forGetter(l -> Optional.ofNullable(l.biomeMatcher)),
                     BlockMatcher.CODEC.optionalFieldOf("blocks").forGetter(l -> Optional.ofNullable(l.blockMatcher)),
                     BlockMatcher.CODEC.optionalFieldOf("upperblocks").forGetter(l -> Optional.ofNullable(l.upperBlockMatcher)),
-                    ResourceLocationMatcher.CODEC.optionalFieldOf("buildings").forGetter(l -> Optional.ofNullable(l.buildingMatcher))
+                    IdentifierMatcher.CODEC.optionalFieldOf("buildings").forGetter(l -> Optional.ofNullable(l.buildingMatcher))
             ).apply(instance, StuffSettingsRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final List<String> tags;
     private final String column;
     private final Integer minheight;
@@ -44,7 +44,7 @@ public class StuffSettingsRE implements IAsset<StuffSettingsRE> {
     private final BiomeMatcher biomeMatcher;
     private final BlockMatcher blockMatcher;
     private final BlockMatcher upperBlockMatcher;
-    private final ResourceLocationMatcher buildingMatcher;
+    private final IdentifierMatcher buildingMatcher;
 
     public StuffSettingsRE(Optional<List<String>> tags,
                            String column,
@@ -52,7 +52,7 @@ public class StuffSettingsRE implements IAsset<StuffSettingsRE> {
                            Optional<Boolean> inbuilding, Optional<Boolean> seesky,
                            Optional<BiomeMatcher> biomeMatcher, Optional<BlockMatcher> blockMatcher,
                            Optional<BlockMatcher> upperBlockMatcher,
-                           Optional<ResourceLocationMatcher> buildingMatcher) {
+                           Optional<IdentifierMatcher> buildingMatcher) {
         this.tags = tags.orElse(Collections.emptyList());
         this.column = column;
         this.minheight = minheight.orElse(null);
@@ -65,7 +65,7 @@ public class StuffSettingsRE implements IAsset<StuffSettingsRE> {
         this.biomeMatcher = biomeMatcher.orElse(BiomeMatcher.ANY);
         this.blockMatcher = blockMatcher.orElse(BlockMatcher.ANY);
         this.upperBlockMatcher = upperBlockMatcher.orElse(BlockMatcher.ANY);
-        this.buildingMatcher = buildingMatcher.orElse(ResourceLocationMatcher.ANY);
+        this.buildingMatcher = buildingMatcher.orElse(IdentifierMatcher.ANY);
     }
 
     public List<String> getTags() {
@@ -104,7 +104,7 @@ public class StuffSettingsRE implements IAsset<StuffSettingsRE> {
         return upperBlockMatcher;
     }
 
-    public ResourceLocationMatcher getBuildingMatcher() {
+    public IdentifierMatcher getBuildingMatcher() {
         return buildingMatcher;
     }
 
@@ -121,13 +121,13 @@ public class StuffSettingsRE implements IAsset<StuffSettingsRE> {
     }
 
     @Override
-    public StuffSettingsRE setRegistryName(ResourceLocation name) {
+    public StuffSettingsRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

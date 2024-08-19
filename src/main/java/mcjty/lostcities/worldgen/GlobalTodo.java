@@ -2,11 +2,11 @@ package mcjty.lostcities.worldgen;
 
 import mcjty.lostcities.setup.Config;
 import mcjty.lostcities.varia.TodoQueue;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 public class GlobalTodo {
 
-    record TodoQueues(TodoQueue<Consumer<ServerLevel>> todo) {                            // Todo blocks that require POI
+    record TodoQueues(TodoQueue<Consumer<ServerWorld>> todo) {                            // Todo blocks that require POI
         // Return true if all queues are empty
         public boolean isEmpty() {
             return todo.isEmpty();
@@ -30,19 +30,19 @@ public class GlobalTodo {
     }
 
     private final Map<ChunkPos, TodoQueues> todoQueues = new HashMap<>();
-    private final static Map<ResourceKey<Level>, GlobalTodo> instances = new HashMap<>();
+    private final static Map<RegistryKey<World>, GlobalTodo> instances = new HashMap<>();
 
-    public static GlobalTodo get(Level world) {
+    public static GlobalTodo get(World world) {
         return instances.computeIfAbsent(world.dimension(), k -> new GlobalTodo());
     }
 
-    public void addTodo(BlockPos pos, Consumer<ServerLevel> code) {
+    public void addTodo(BlockPos pos, Consumer<ServerWorld> code) {
         ChunkPos chunkPos = new ChunkPos(pos);
         TodoQueues queues = todoQueues.computeIfAbsent(chunkPos, k -> new TodoQueues(new TodoQueue<>()));
         queues.todo.add(pos, code);
     }
 
-    public void executeAndClearTodo(ServerLevel level) {
+    public void executeAndClearTodo(ServerWorld level) {
         int todoSize = Config.TODO_QUEUE_SIZE.get();
 
         // @todo process chunks based on their distance to the player

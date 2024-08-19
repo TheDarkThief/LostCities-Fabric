@@ -19,7 +19,7 @@ public class DimensionDictionary
     public static final String UNCATEGORIZED = "UNCATEGORIZED";
 
     /**
-     * Dimensions that exist in the base game of Minecraft.
+     * Dimensions that exist in the base game of MinecraftClient.
      */
     public static final String MC_DEFAULT = "MC_DEFAULT";
 

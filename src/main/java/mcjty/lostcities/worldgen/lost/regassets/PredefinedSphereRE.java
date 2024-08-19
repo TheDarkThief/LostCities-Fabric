@@ -2,7 +2,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 public class PredefinedSphereRE implements IAsset<PredefinedSphereRE> {
@@ -17,7 +17,7 @@ public class PredefinedSphereRE implements IAsset<PredefinedSphereRE> {
                     Codec.INT.fieldOf("radius").forGetter(l -> l.radius)
             ).apply(instance, PredefinedSphereRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
 
     private final String dimension;
     private final int chunkX;
@@ -62,13 +62,13 @@ public class PredefinedSphereRE implements IAsset<PredefinedSphereRE> {
     }
 
     @Override
-    public PredefinedSphereRE setRegistryName(ResourceLocation name) {
+    public PredefinedSphereRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

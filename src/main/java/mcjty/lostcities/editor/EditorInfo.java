@@ -1,7 +1,7 @@
 package mcjty.lostcities.editor;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.block.BlockState;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -3,16 +3,16 @@ package mcjty.lostcities.gui;
 import mcjty.lostcities.LostCities;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.config.ProfileSetup;
-import mcjty.lostcities.varia.ComponentFactory;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.packs.resources.CloseableResourceManager;
-import net.minecraft.server.packs.resources.MultiPackResourceManager;
-import net.minecraft.server.packs.resources.Resource;
+import mcjty.lostcities.varia.TextFactory;
+import net.minecraft.util.Formatting;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.resource.LifecycledResourceManager;
+import net.minecraft.resource.LifecycledResourceManagerImpl;
+import net.minecraft.resource.Resource;
 
 import java.util.List;
 import java.util.Map;
@@ -62,13 +62,13 @@ public class LostCitySetup {
         return profile == null ? "Disabled" : profile;
     }
 
-    public Component getProfileInfo() {
+    public Text getProfileInfo() {
         return get()
-                .map(p -> ComponentFactory.literal(p.getDescription() + "\n").append(
-                        ComponentFactory.literal(p.getExtraDescription() + "\n").withStyle(ChatFormatting.AQUA)).append(
-                        ComponentFactory.literal(p.getWarning()).withStyle(ChatFormatting.RED)
+                .map(p -> TextFactory.literal(p.getDescription() + "\n").append(
+                        TextFactory.literal(p.getExtraDescription() + "\n").formatted(Formatting.AQUA)).append(
+                        TextFactory.literal(p.getWarning()).formatted(Formatting.RED)
                 ))
-                .orElse(ComponentFactory.literal("Click here to select a profile for your Lost Cities"));
+                .orElse(TextFactory.literal("Click here to select a profile for your Lost Cities"));
     }
 
     public String getWorldStyleLabel() {
@@ -119,7 +119,7 @@ public class LostCitySetup {
 //    }
 
 
-    private static String worldStyleToName(ResourceLocation rl) {
+    private static String worldStyleToName(Identifier rl) {
         String path = rl.getPath();
         int idx = path.lastIndexOf('/');
         if (idx != -1) {
@@ -136,9 +136,9 @@ public class LostCitySetup {
     }
 
     public void toggleWorldStyle() {
-        PackRepository repository = Minecraft.getInstance().getResourcePackRepository();
-        CloseableResourceManager resourceManager = new MultiPackResourceManager(PackType.SERVER_DATA, repository.openAllSelected());
-        Map<ResourceLocation, Resource> map = resourceManager.listResources("lostcities/worldstyles", s -> s.toString().endsWith(".json"));
+        ResourcePackManager repository = MinecraftClient.getInstance().getResourcePackManager();
+        LifecycledResourceManager resourceManager = new LifecycledResourceManagerImpl(ResourceType.SERVER_DATA, repository.createResourcePacks());
+        Map<Identifier, Resource> map = resourceManager.findResources("lostcities/worldstyles", s -> s.toString().endsWith(".json"));
         List<String> styles = map.keySet().stream().map(LostCitySetup::worldStyleToName).collect(Collectors.toList());
         String current = get().map(LostCityProfile::getWorldStyle).orElse("<none>");
         int idx = styles.indexOf(current);
@@ -154,6 +154,8 @@ public class LostCitySetup {
             get().get().setWorldStyle(styles.get(idx));
         }
         refreshPreview.run();
+        // If things break remove this line of code
+        resourceManager.close();
     }
 
     public void toggleProfile() {

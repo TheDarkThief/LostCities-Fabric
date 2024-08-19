@@ -1,6 +1,6 @@
 package mcjty.lostcities.varia;
 
-import net.minecraft.util.RandomSource;
+import net.minecraft.util.math.random.Random;
 
 public class NoiseGeneratorSimplex {
     private static final int[][] GRAD_3 = new int[][]{{1, 1, 0}, {-1, 1, 0}, {1, -1, 0}, {-1, -1, 0}, {1, 0, 1}, {-1, 0, 1}, {1, 0, -1}, {-1, 0, -1}, {0, 1, 1}, {0, -1, 1}, {0, 1, -1}, {0, -1, -1}};
@@ -12,7 +12,7 @@ public class NoiseGeneratorSimplex {
     private static final double F2 = 0.5D * (SQRT_3 - 1.0D);
     private static final double G2 = (3.0D - SQRT_3) / 6.0D;
 
-    public NoiseGeneratorSimplex(RandomSource seed) {
+    public NoiseGeneratorSimplex(Random seed) {
         this.p = new int[512];
         this.xo = seed.nextDouble() * 256.0D;
         this.yo = seed.nextDouble() * 256.0D;

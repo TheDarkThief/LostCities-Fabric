@@ -7,17 +7,16 @@ import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.LostCityTerrainFeature;
 import mcjty.lostcities.worldgen.lost.cityassets.WorldStyle;
 import mcjty.lostcities.worldgen.lost.regassets.WorldStyleRE;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.util.math.random.CheckedRandom;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -110,17 +109,17 @@ public class NullDimensionInfo implements IDimensionInfo {
         ));
         this.seed = seed;
         random = new Random(seed);
-        RandomSource randomSource = new LegacyRandomSource(seed);
-        feature = new LostCityTerrainFeature(this, profile, randomSource);
+        CheckedRandom Random = new CheckedRandom(seed);
+        feature = new LostCityTerrainFeature(this, profile, Random);
         feature.setupStates(profile);
         // @todo 1.19.3
-//        biomeRegistry = ServerLifecycleHooks.getCurrentServer().registryAccess().registryOrThrow(Registries.BIOME);
+//        biomeRegistry = ServerLifecycleHooks.getCurrentServer().registryAccess().get(RegistryKeys.BIOME);
 //        biomeRegistry = RegistryAccess.builtinCopy().registry(Registry.BIOME_REGISTRY).get();
         biomeRegistry = null;
     }
 
     @Override
-    public void setWorld(WorldGenLevel world) {
+    public void setWorld(StructureWorldAccess world) {
     }
 
     @Override
@@ -129,13 +128,13 @@ public class NullDimensionInfo implements IDimensionInfo {
     }
 
     @Override
-    public WorldGenLevel getWorld() {
+    public StructureWorldAccess getWorld() {
         return null;
     }
 
     @Override
-    public ResourceKey<Level> getType() {
-        return Level.OVERWORLD;
+    public RegistryKey<World> getType() {
+        return World.OVERWORLD;
     }
 
     @Override
@@ -218,26 +217,26 @@ public class NullDimensionInfo implements IDimensionInfo {
 //    }
 
     @Override
-    public Holder<Biome> getBiome(BlockPos pos) {
+    public RegistryEntry<Biome> getBiome(BlockPos pos) {
         ChunkPos cp = new ChunkPos(pos);
         char b = getBiomeChar(cp.x, cp.z);
-        ResourceKey<Biome> biome = switch (b) {
-            case 'p' -> Biomes.PLAINS;
-            case '-' -> Biomes.OCEAN;
-            case '=' -> Biomes.RIVER;
-            case '#' -> Biomes.STONY_PEAKS;
+        RegistryKey<Biome> biome = switch (b) {
+            case 'p' -> BiomeKeys.PLAINS;
+            case '-' -> BiomeKeys.OCEAN;
+            case '=' -> BiomeKeys.RIVER;
+            case '#' -> BiomeKeys.STONY_PEAKS;
             // @todo 1.18
-            case '+' -> Biomes.JAGGED_PEAKS;
+            case '+' -> BiomeKeys.JAGGED_PEAKS;
             // @todo 1.18
-            case '*' -> Biomes.BEACH;
-            case 'd' -> Biomes.DESERT;
-            default -> Biomes.PLAINS;
+            case '*' -> BiomeKeys.BEACH;
+            case 'd' -> BiomeKeys.DESERT;
+            default -> BiomeKeys.PLAINS;
         };
-        return biomeRegistry.getHolderOrThrow(biome);
+        return biomeRegistry.getEntry(biome).get();
     }
 
     @Override
-    public ResourceKey<Level> dimension() {
+    public RegistryKey<World> dimension() {
         return null;
     }
 }

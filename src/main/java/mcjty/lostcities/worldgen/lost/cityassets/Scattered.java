@@ -3,10 +3,10 @@ package mcjty.lostcities.worldgen.lost.cityassets;
 import mcjty.lostcities.api.ILostCityAsset;
 import mcjty.lostcities.worldgen.lost.regassets.ScatteredRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.StringRepresentable;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.StringIdentifiable;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class Scattered implements ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
     private final List<String> buildings;
     private final String multibuilding;
     private final Scattered.TerrainHeight terrainheight;
@@ -58,18 +58,18 @@ public class Scattered implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 
-    public static enum TerrainHeight implements StringRepresentable {
+    public static enum TerrainHeight implements StringIdentifiable {
         LOWEST("lowest"),
         AVERAGE("average"),
         HIGHEST("highest"),
         OCEAN("ocean")
         ;
 
-        private static final Map<String, TerrainHeight> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(TerrainHeight::getSerializedName, (v) -> v));
+        private static final Map<String, TerrainHeight> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(TerrainHeight::asString, (v) -> v));
 
         TerrainHeight(String name) {
             this.name = name;
@@ -87,18 +87,18 @@ public class Scattered implements ILostCityAsset {
         }
 
         @Override
-        public String getSerializedName() {
+        public String asString() {
             return name;
         }
     }
 
-    public static enum TerrainFix implements StringRepresentable {
+    public static enum TerrainFix implements StringIdentifiable {
         NONE("none"),               // Do nothing with the terrain
         CLEAR("clear"),             // Clear from generation point upwards
         REPEATSLICE("repeatslice")  // Repeat the bottom slice downwards until it hits a solid block
         ;
 
-        private static final Map<String, TerrainFix> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(TerrainFix::getSerializedName, (v) -> v));
+        private static final Map<String, TerrainFix> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(TerrainFix::asString, (v) -> v));
 
         TerrainFix(String name) {
             this.name = name;
@@ -116,7 +116,7 @@ public class Scattered implements ILostCityAsset {
         }
 
         @Override
-        public String getSerializedName() {
+        public String asString() {
             return name;
         }
     }

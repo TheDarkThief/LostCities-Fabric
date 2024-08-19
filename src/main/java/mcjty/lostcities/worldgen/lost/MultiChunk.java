@@ -5,7 +5,7 @@ import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.varia.Counter;
 import mcjty.lostcities.varia.Tools;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import mcjty.lostcities.worldgen.lost.cityassets.CityStyle;
 import mcjty.lostcities.worldgen.lost.cityassets.MultiBuilding;
 import mcjty.lostcities.worldgen.lost.regassets.data.MultiSettings;
@@ -109,11 +109,11 @@ public class MultiChunk {
             } else if (b2 == null) {
                 return -1;
             }
-            MultiBuilding building1 = AssetRegistries.MULTI_BUILDINGS.get(provider.getWorld(), b1);
+            MultiBuilding building1 = AssetRegistryKeys.MULTI_BUILDINGS.get(provider.getWorld(), b1);
             if (building1 == null) {
                 throw new RuntimeException("Cannot find multibuilding: " + b1);
             }
-            MultiBuilding building2 = AssetRegistries.MULTI_BUILDINGS.get(provider.getWorld(), b2);
+            MultiBuilding building2 = AssetRegistryKeys.MULTI_BUILDINGS.get(provider.getWorld(), b2);
             if (building2 == null) {
                 throw new RuntimeException("Cannot find multibuilding: " + b2);
             }
@@ -126,7 +126,7 @@ public class MultiChunk {
             if (multiBuilding == null) {
                 continue;
             }
-            MultiBuilding building = AssetRegistries.MULTI_BUILDINGS.get(provider.getWorld(), multiBuilding);
+            MultiBuilding building = AssetRegistryKeys.MULTI_BUILDINGS.get(provider.getWorld(), multiBuilding);
             if (building == null) {
                 throw new RuntimeException("Cannot find multibuilding: " + multiBuilding);
             }

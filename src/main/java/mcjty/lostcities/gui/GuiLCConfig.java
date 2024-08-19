@@ -7,19 +7,19 @@ import mcjty.lostcities.config.ProfileSetup;
 import mcjty.lostcities.gui.elements.*;
 import mcjty.lostcities.setup.Config;
 import mcjty.lostcities.varia.ChunkCoord;
-import mcjty.lostcities.varia.ComponentFactory;
+import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.worldgen.LostCityFeature;
 import mcjty.lostcities.worldgen.lost.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.screen.Screen;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,10 +29,12 @@ public class GuiLCConfig extends Screen {
 
     private final Screen parent;
 
-    private Button profileButton;
-    private Button worldstyleButton;
-    private Button customizeButton;
-    private Button modeButton;
+    private TextRenderer font;
+
+    private ButtonWidget profileButton;
+    private ButtonWidget worldstyleButton;
+    private ButtonWidget customizeButton;
+    private ButtonWidget modeButton;
 
     private static final int YOFFSET = 21;
     private String curpage;
@@ -52,7 +54,7 @@ public class GuiLCConfig extends Screen {
     private final LostCitySetup localSetup = new LostCitySetup(this::refreshPreview);
 
     public GuiLCConfig(Screen parent) {
-        super(ComponentFactory.literal("Lost City Configuration"));
+        super(TextFactory.literal("Lost City Configuration"));
         this.parent = parent;
         localSetup.copyFrom(LostCitySetup.CLIENT_SETUP);
     }
@@ -73,7 +75,7 @@ public class GuiLCConfig extends Screen {
         return localSetup;
     }
 
-    public Font getFont() {
+    public TextRenderer getFont() {
         return this.font;
     }
 
@@ -88,28 +90,28 @@ public class GuiLCConfig extends Screen {
         // @todo 1.19.3
 //        this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
 
-        profileButton = addRenderableWidget(new ButtonExt(55, 10, 80, 20, ComponentFactory.literal(localSetup.getProfileLabel()), p -> {
+        profileButtonWidget = addDrawableChild(new ButtonExt(55, 10, 80, 20, TextFactory.literal(localSetup.getProfileLabel()), p -> {
             localSetup.toggleProfile();
             updateValues();
-        }).tooltip(ComponentFactory.literal("Select a standard profile for your Lost City worldgen")));
+        }).tooltip(TextFactory.literal("Select a standard profile for your Lost City worldgen")));
 
-        worldstyleButton = addRenderableWidget(new ButtonExt(145, 10, 120, 20, ComponentFactory.literal(localSetup.getWorldStyleLabel()), p -> {
+        worldstyleButtonWidget = addDrawableChild(new ButtonExt(145, 10, 120, 20, TextFactory.literal(localSetup.getWorldStyleLabel()), p -> {
             localSetup.toggleWorldStyle();
             updateValues();
-        }).tooltip(ComponentFactory.literal("Select the worldstyle to use for this profile")));
+        }).tooltip(TextFactory.literal("Select the worldstyle to use for this profile")));
 
-        customizeButton = addRenderableWidget(new ButtonExt(275, 10, 70, 20, ComponentFactory.literal("Customize"), p -> {
+        customizeButtonWidget = addDrawableChild(new ButtonExt(275, 10, 70, 20, TextFactory.literal("Customize"), p -> {
             localSetup.customize();
             updateValues();
-        }).tooltip(ComponentFactory.literal("Create a customized version of the currently selected profile")));
-        modeButton = addRenderableWidget(new ButtonExt(355, 10, 70, 20, ComponentFactory.literal(mode), p -> toggleMode())
-            .tooltip(ComponentFactory.literal("Switch between different configuration pages")));
+        }).tooltip(TextFactory.literal("Create a customized version of the currently selected profile")));
+        modeButtonWidget = addDrawableChild(new ButtonExt(355, 10, 70, 20, TextFactory.literal(mode), p -> toggleMode())
+            .tooltip(TextFactory.literal("Switch between different configuration pages")));
 
 
-        addRenderableWidget(Button.builder(ComponentFactory.literal("Done"), p -> done()).bounds(10, this.height - 22, 120, 20).build());
-        addRenderableWidget(Button.builder(ComponentFactory.literal("Cancel"), p -> cancel()).bounds(this.width - 130, this.height - 22, 120, 20).build());
-        addRenderableWidget(new ButtonExt(this.width - 35, 35, 30, 20, ComponentFactory.literal("Rnd"), p -> randomizePreview())
-                .tooltip(ComponentFactory.literal("Randomize the seed for the preview (does not affect the generated world)")));
+        addDrawableChild(ButtonWidget.builder(TextFactory.literal("Done"), p -> done()).bounds(10, this.height - 22, 120, 20).build());
+        addDrawableChild(ButtonWidget.builder(TextFactory.literal("Cancel"), p -> cancel()).bounds(this.width - 130, this.height - 22, 120, 20).build());
+        addDrawableChild(new ButtonExt(this.width - 35, 35, 30, 20, TextFactory.literal("Rnd"), p -> randomizePreview())
+                .tooltip(TextFactory.literal("Randomize the seed for the preview (does not affect the generated world)")));
 
         initCities(110);
         initBuildings(110);
@@ -216,8 +218,8 @@ public class GuiLCConfig extends Screen {
 
     private void initCities(int left) {
         start("Cities");
-        TextExt info = addRenderableWidget(new TextExt(this, 10, 30, 230, 3, getFont(),
-                ComponentFactory.literal("Cities are the main feature of Lost Cities. In this page you can control the rarity of them")));
+        TextExt info = addDrawableChild(new TextExt(this, 10, 30, 230, 3, getFont(),
+                TextFactory.literal("Cities are the main feature of Lost Cities. In this page you can control the rarity of them")));
         add(new WidgetElement(info, curpage, 10, 30));
         nl();
         addDouble(left,120, "cities.cityChance").label("Rarity:"); nl();
@@ -241,7 +243,7 @@ public class GuiLCConfig extends Screen {
             idx = 0;
         }
         mode = MODES.get(idx);
-        modeButton.setMessage(ComponentFactory.literal(mode));
+        modeButton.setMessage(TextFactory.literal(mode));
     }
 
     private GuiElement add(GuiElement el) {
@@ -249,8 +251,8 @@ public class GuiLCConfig extends Screen {
         return el;
     }
 
-    public <T extends AbstractWidget> T addWidget(T widget) {
-        return this.addRenderableWidget(widget);
+    public <T extends ClickableWidget> T addWidget(T widget) {
+        return this.addDrawableChild(widget);
     }
 
     private void randomizePreview() {
@@ -267,8 +269,8 @@ public class GuiLCConfig extends Screen {
         CitySphere.cleanCache();
     }
 
-    private void renderExtra(GuiGraphics graphics) {
-        graphics.drawString(font, "Profile:", 10, 16, 0xffffffff);
+    private void renderExtra(DrawContext graphics) {
+        graphics.drawTextWithShadow(font, "Profile:", 10, 16, 0xffffffff);
         elements.forEach(el -> el.render(graphics));
 
         localSetup.get().ifPresent(profile -> {
@@ -284,7 +286,7 @@ public class GuiLCConfig extends Screen {
         });
     }
 
-    private void renderPreviewTransports(GuiGraphics graphics, LostCityProfile profile) {
+    private void renderPreviewTransports(DrawContext graphics, LostCityProfile profile) {
         renderPreviewMap(graphics, profile, true);
         NullDimensionInfo diminfo = new NullDimensionInfo(profile, seed);
         for (int z = 0; z < NullDimensionInfo.PREVIEW_HEIGHT; z++) {
@@ -313,7 +315,7 @@ public class GuiLCConfig extends Screen {
         }
     }
 
-    private void renderPreviewCity(GuiGraphics graphics, LostCityProfile profile, boolean showDamage) {
+    private void renderPreviewCity(DrawContext graphics, LostCityProfile profile, boolean showDamage) {
         int base = 50 + 120;
         int leftRender = this.width - 157;
         graphics.fill(leftRender, 50, leftRender + 150, base, 0xff0099bb);
@@ -407,7 +409,7 @@ public class GuiLCConfig extends Screen {
         return color;
     }
 
-    private void renderPreviewMap(GuiGraphics graphics, LostCityProfile profile, boolean soft) {
+    private void renderPreviewMap(DrawContext graphics, LostCityProfile profile, boolean soft) {
         NullDimensionInfo diminfo = new NullDimensionInfo(profile, seed);
         for (int z = 0; z < NullDimensionInfo.PREVIEW_HEIGHT; z++) {
             for (int x = 0; x < NullDimensionInfo.PREVIEW_WIDTH; x++) {
@@ -441,12 +443,12 @@ public class GuiLCConfig extends Screen {
     private void updateValues() {
         elements.forEach(GuiElement::update);
         refreshPreview();
-        profileButton.setTooltip(Tooltip.create(getLocalSetup().getProfileInfo()));
+        profileButton.setTooltip(Tooltip.of(getLocalSetup().getProfileInfo()));
     }
 
     private void refreshButtons() {
-        profileButton.setMessage(ComponentFactory.literal(localSetup.getProfileLabel()));
-        worldstyleButton.setMessage(ComponentFactory.literal(localSetup.getWorldStyleLabel()));
+        profileButton.setMessage(TextFactory.literal(localSetup.getProfileLabel()));
+        worldstyleButton.setMessage(TextFactory.literal(localSetup.getWorldStyleLabel()));
         customizeButton.active = localSetup.isCustomizable();
 
         boolean isCustomized = "customized".equals(localSetup.getProfileLabel());
@@ -468,7 +470,7 @@ public class GuiLCConfig extends Screen {
 
     private void cancel() {
         refreshPreview();
-        Minecraft.getInstance().setScreen(parent);
+        MinecraftClient.getInstance().setScreen(parent);
     }
 
     private void done() {
@@ -482,19 +484,19 @@ public class GuiLCConfig extends Screen {
             selectProfile(localSetup.getProfile(), null);
         }
 
-        Minecraft.getInstance().setScreen(parent);
+        MinecraftClient.getInstance().setScreen(parent);
         LostCityFeature.globalDimensionInfoDirtyCounter++;
         Config.resetProfileCache();
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(graphics);
+    public void render(DrawContext graphics, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(graphics, mouseX, mouseY, partialTicks);
         refreshButtons();
         renderExtra(graphics);
         super.render(graphics, mouseX, mouseY, partialTicks);
-        for(GuiEventListener listener : this.children()) {
-            if (listener instanceof AbstractWidget widget) {
+        for(Element listener : this.children()) {
+            if (listener instanceof ClickableWidget widget) {
                 if (widget.isMouseOver(mouseX, mouseY) && widget.visible) {
                     Tooltip tooltip = widget.getTooltip();
                     if (tooltip != null) {

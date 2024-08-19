@@ -1,14 +1,14 @@
 package mcjty.lostcities.api;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.CommonLevelAccessor;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.RegistryWorldView;
 
 public interface ILostCityAsset {
 
     // Called after the asset is fetched from the registry
-    default void init(CommonLevelAccessor level) {}
+    default void init(RegistryWorldView world) {}
 
     String getName();
 
-    ResourceLocation getId();
+    Identifier getId();
 }

@@ -2,9 +2,9 @@ package mcjty.lostcities.gui.elements;
 
 import mcjty.lostcities.config.Configuration;
 import mcjty.lostcities.gui.GuiLCConfig;
-import mcjty.lostcities.varia.ComponentFactory;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
+import mcjty.lostcities.varia.TextFactory;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
 
 public class BooleanElement extends GuiElement {
 
@@ -18,12 +18,12 @@ public class BooleanElement extends GuiElement {
         this.gui = gui;
         this.attribute = attribute;
         Boolean c = gui.getLocalSetup().get().map(h -> (Boolean) h.toConfiguration().get(attribute)).orElse(false);
-        field = new ButtonExt(x, y, 60, 16, c ? ComponentFactory.literal("On") : ComponentFactory.literal("Off"), button -> {
-            Component message = button.getMessage();
+        field = new ButtonExt(x, y, 60, 16, c ? TextFactory.literal("On") : TextFactory.literal("Off"), button -> {
+            Text message = button.getMessage();
             if ("On".equals(message.getString())) { // @todo 1.16 getString() is ugly here!
-                button.setMessage(ComponentFactory.literal("Off"));
+                button.setMessage(TextFactory.literal("Off"));
             } else {
-                button.setMessage(ComponentFactory.literal("On"));
+                button.setMessage(TextFactory.literal("On"));
             }
             gui.getLocalSetup().get().ifPresent(profile -> {
                 Configuration configuration = profile.toConfiguration();
@@ -49,10 +49,10 @@ public class BooleanElement extends GuiElement {
     }
 
     @Override
-    public void render(GuiGraphics graphics) {
+    public void render(DrawContext graphics) {
         if (label != null) {
             if (field.visible) {
-                graphics.drawString(gui.getFont(), label, 10, y + 5, 0xffffffff);
+                graphics.drawTextWithShadow(gui.getFont(), label, 10, y + 5, 0xffffffff);
             }
         }
     }
@@ -61,7 +61,7 @@ public class BooleanElement extends GuiElement {
     public void update() {
         gui.getLocalSetup().get().ifPresent(profile -> {
             Boolean result = profile.toConfiguration().get(attribute);
-            field.setMessage(result ? ComponentFactory.literal("On") : ComponentFactory.literal("Off"));
+            field.setMessage(result ? TextFactory.literal("On") : TextFactory.literal("Off"));
         });
     }
 

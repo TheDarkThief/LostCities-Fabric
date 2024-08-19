@@ -1,7 +1,7 @@
 package mcjty.lostcities.worldgen.lost;
 
 import mcjty.lostcities.api.ILostExplosion;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 
 public class Explosion implements ILostExplosion {
     private final int radius;

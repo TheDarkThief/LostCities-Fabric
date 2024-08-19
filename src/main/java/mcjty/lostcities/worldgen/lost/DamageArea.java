@@ -7,10 +7,10 @@ import mcjty.lostcities.varia.Tools;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.LostTags;
 import mcjty.lostcities.worldgen.lost.cityassets.CompiledPalette;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.Box;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ public class DamageArea {
     private final int chunkX;
     private final int chunkZ;
     private final List<Explosion> explosions = new ArrayList<>();
-    private final AABB chunkBox;
+    private final Box chunkBox;
     private final LostCityProfile profile;
 
     private final BlockState air;
@@ -34,8 +34,8 @@ public class DamageArea {
         this.profile = info.profile;
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
-        this.air = Blocks.AIR.defaultBlockState();
-        chunkBox = new AABB(chunkX * 16, 0, chunkZ * 16, chunkX * 16 + 15, 256, chunkZ * 16 + 15);
+        this.air = Blocks.AIR.getDefaultState();
+        chunkBox = new Box(chunkX * 16, 0, chunkZ * 16, chunkX * 16 + 15, 256, chunkZ * 16 + 15);
 
         Random damageRandom = new Random(seed + chunkZ * 295075153L + chunkX * 899826547L);
 
@@ -131,7 +131,7 @@ public class DamageArea {
 
     // Return true if this subchunk (every 16 blocks) is affected by explosions
     public boolean hasExplosions(int y) {
-        AABB box = new AABB(chunkX * 16, y * 16, chunkZ * 16, chunkX * 16 + 15, y * 16 + 15, chunkZ * 16 + 15);
+        Box box = new Box(chunkX * 16, y * 16, chunkZ * 16, chunkX * 16 + 15, y * 16 + 15, chunkZ * 16 + 15);
         for (Explosion explosion : explosions) {
             double dmin = GeometryTools.squaredDistanceBoxPoint(box, explosion.getCenter());
             if (dmin <= explosion.getRadius() * explosion.getRadius()) {
@@ -143,7 +143,7 @@ public class DamageArea {
 
     // Return true if this subchunk is completely destroyed by an explosion
     public boolean isCompletelyDestroyed(int y) {
-        AABB box = new AABB(chunkX * 16, y * 16, chunkZ * 16, chunkX * 16 + 15, y * 16 + 15, chunkZ * 16 + 15);
+        Box box = new Box(chunkX * 16, y * 16, chunkZ * 16, chunkX * 16 + 15, y * 16 + 15, chunkZ * 16 + 15);
         for (Explosion explosion : explosions) {
             double dmax = GeometryTools.maxSquaredDistanceBoxPoint(box, explosion.getCenter());
             int sqdist = explosion.getRadius() * explosion.getRadius();
@@ -186,7 +186,7 @@ public class DamageArea {
     public float getDamageFactor() {
         float damage = 0.0f;
         for (Explosion explosion : explosions) {
-            double sq = explosion.getCenter().distToCenterSqr(chunkX * 16.0, explosion.getCenter().getY(), chunkZ * 16.0);
+            double sq = explosion.getCenter().getSquaredDistanceFromCenter(chunkX * 16.0, explosion.getCenter().getY(), chunkZ * 16.0);
             if (sq < explosion.getSqradius()) {
                 double d = Math.sqrt(sq);
                 damage += 3.0f * (explosion.getRadius() - d) / explosion.getRadius();
@@ -199,7 +199,7 @@ public class DamageArea {
     public float getDamage(int x, int y, int z) {
         float damage = 0.0f;
         for (Explosion explosion : explosions) {
-            double sq = explosion.getCenter().distToCenterSqr(x, y, z);
+            double sq = explosion.getCenter().getSquaredDistanceFromCenter(x, y, z);
             if (sq < explosion.getSqradius()) {
                 double d = Math.sqrt(sq);
                 damage += 3.0f * (explosion.getRadius() - d) / explosion.getRadius();

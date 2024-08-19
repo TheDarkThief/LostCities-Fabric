@@ -74,7 +74,7 @@ public class Railway {
             return direction;
         }
 
-        public int getLevel() {
+        public int getWorld() {
             return level;
         }
 
@@ -346,36 +346,36 @@ public class Railway {
                 // chunkX actually points to the next chunk. If there is a highway there we want to avoid that and go down this level already
                 int highwayX = Highway.getXHighwayLevel(coord, provider, profile);
                 int highwayZ = Highway.getZHighwayLevel(coord, provider, profile);
-                if ((highwayX != -1 && adjacent.getLevel() == highwayX) || (highwayZ != -1 && adjacent.getLevel() == highwayZ)) {
+                if ((highwayX != -1 && adjacent.getWorld() == highwayX) || (highwayZ != -1 && adjacent.getWorld() == highwayZ)) {
                     // We have a highway there so go down here by setting r to 1
                     r = 1;
                 }
                 if (r < .4f) {
-                    return new RailChunkInfo(STATION_EXTENSION_SURFACE, direction, adjacent.getLevel(), adjacent.getRails());
-                } else if ((adjacent.getLevel() & 1) == 0) {
-                    return new RailChunkInfo(GOING_DOWN_ONE_FROM_SURFACE, direction, adjacent.getLevel() - 1, adjacent.getRails());
+                    return new RailChunkInfo(STATION_EXTENSION_SURFACE, direction, adjacent.getWorld(), adjacent.getRails());
+                } else if ((adjacent.getWorld() & 1) == 0) {
+                    return new RailChunkInfo(GOING_DOWN_ONE_FROM_SURFACE, direction, adjacent.getWorld() - 1, adjacent.getRails());
                 } else {
-                    return new RailChunkInfo(GOING_DOWN_TWO_FROM_SURFACE, direction, adjacent.getLevel() - 2, adjacent.getRails());
+                    return new RailChunkInfo(GOING_DOWN_TWO_FROM_SURFACE, direction, adjacent.getWorld() - 2, adjacent.getRails());
                 }
             case STATION_UNDERGROUND:
                 return r < .4f
-                        ? new RailChunkInfo(STATION_EXTENSION_UNDERGROUND, direction, adjacent.getLevel(), adjacent.getRails())
-                        : new RailChunkInfo(HORIZONTAL, direction, adjacent.getLevel(), adjacent.getRails());
+                        ? new RailChunkInfo(STATION_EXTENSION_UNDERGROUND, direction, adjacent.getWorld(), adjacent.getRails())
+                        : new RailChunkInfo(HORIZONTAL, direction, adjacent.getWorld(), adjacent.getRails());
             case STATION_EXTENSION_SURFACE:
-                if ((adjacent.getLevel() & 1) == 0) {
-                    return new RailChunkInfo(GOING_DOWN_ONE_FROM_SURFACE, direction, adjacent.getLevel() - 1, adjacent.getRails());
+                if ((adjacent.getWorld() & 1) == 0) {
+                    return new RailChunkInfo(GOING_DOWN_ONE_FROM_SURFACE, direction, adjacent.getWorld() - 1, adjacent.getRails());
                 } else {
-                    return new RailChunkInfo(GOING_DOWN_TWO_FROM_SURFACE, direction, adjacent.getLevel() - 2, adjacent.getRails());
+                    return new RailChunkInfo(GOING_DOWN_TWO_FROM_SURFACE, direction, adjacent.getWorld() - 2, adjacent.getRails());
                 }
             case STATION_EXTENSION_UNDERGROUND:
-                return new RailChunkInfo(HORIZONTAL, direction, adjacent.getLevel(), adjacent.getRails());
+                return new RailChunkInfo(HORIZONTAL, direction, adjacent.getWorld(), adjacent.getRails());
             case GOING_DOWN_FURTHER:
             case GOING_DOWN_ONE_FROM_SURFACE:
             case GOING_DOWN_TWO_FROM_SURFACE:
-                if (adjacent.getLevel() == RAILWAY_LEVEL_OFFSET) {
-                    return new RailChunkInfo(HORIZONTAL, direction, adjacent.getLevel(), adjacent.getRails());
+                if (adjacent.getWorld() == RAILWAY_LEVEL_OFFSET) {
+                    return new RailChunkInfo(HORIZONTAL, direction, adjacent.getWorld(), adjacent.getRails());
                 } else {
-                    return new RailChunkInfo(GOING_DOWN_FURTHER, direction, adjacent.getLevel() - 2, adjacent.getRails());
+                    return new RailChunkInfo(GOING_DOWN_FURTHER, direction, adjacent.getWorld() - 2, adjacent.getRails());
                 }
             case THREE_SPLIT:
                 break;
@@ -385,7 +385,7 @@ public class Railway {
                 break;
             case RAILS_END_HERE:
                 if (direction == adjacent.getDirection()) {
-                    return new RailChunkInfo(HORIZONTAL, direction, adjacent.getLevel(), adjacent.getRails());
+                    return new RailChunkInfo(HORIZONTAL, direction, adjacent.getWorld(), adjacent.getRails());
                 } else {
                     return RailChunkInfo.NOTHING;
                 }

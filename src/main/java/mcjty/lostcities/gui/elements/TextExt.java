@@ -1,27 +1,24 @@
 package mcjty.lostcities.gui.elements;
 
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.MultiLineTextWidget;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.client.font.TextRenderer ;
+import net.minecraft.client.gui.widget.MultilineTextWidget;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.Text;
 
-import java.util.function.Supplier;
 
-public class TextExt extends MultiLineTextWidget {
+public class TextExt extends MultilineTextWidget {
 
     private final Screen parent;
-    private Component tooltip = null;
+    private Text tooltip = null;
 
-    public TextExt(Screen parent, int x, int y, int w, int rows, Font font, Component message) {
+    public TextExt(Screen parent, int x, int y, int w, int rows, TextRenderer font, Text message) {
         super(x, y, message, font);
         this.parent = parent;
         setMaxWidth(w);
         setMaxRows(rows);
     }
 
-    public TextExt tooltip(Component tooltip) {
+    public TextExt tooltip(Text tooltip) {
         this.tooltip = tooltip;
         return this;
     }

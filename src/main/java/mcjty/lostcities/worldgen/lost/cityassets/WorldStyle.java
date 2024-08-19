@@ -7,13 +7,13 @@ import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BiomeInfo;
 import mcjty.lostcities.worldgen.lost.regassets.WorldStyleRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.*;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.biome.Biome;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.Biome;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,14 +21,14 @@ import java.util.function.Predicate;
 
 public class WorldStyle implements ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
     private final String outsideStyle;
 
     private final CitySphereSettings citysphereSettings;
     private final ScatteredSettings scatteredSettings;
-    @Nonnull private final PartSelector partSelector;
-    private final List<Pair<Predicate<Holder<Biome>>, Pair<Float, String>>> cityStyleSelector = new ArrayList<>();
-    private final List<Pair<Predicate<Holder<Biome>>, Float>> cityBiomeMultiplier = new ArrayList<>();
+    @NotNull private final PartSelector partSelector;
+    private final List<Pair<Predicate<RegistryEntry<Biome>>, Pair<Float, String>>> cityStyleSelector = new ArrayList<>();
+    private final List<Pair<Predicate<RegistryEntry<Biome>>, Float>> cityBiomeMultiplier = new ArrayList<>();
     private final MultiSettings multiSettings;
 
     public WorldStyle(WorldStyleRE object) {
@@ -39,7 +39,7 @@ public class WorldStyle implements ILostCityAsset {
         this.multiSettings = object.getMultiSettings();
         outsideStyle = object.getOutsideStyle();
         for (CityStyleSelector selector : object.getCityStyleSelectors()) {
-            Predicate<Holder<Biome>> predicate = biomeHolder -> true;
+            Predicate<RegistryEntry<Biome>> predicate = biomeRegistryEntry -> true;
             if (selector.biomeMatcher() != null) {
                 predicate = selector.biomeMatcher();
             }
@@ -58,7 +58,7 @@ public class WorldStyle implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 
@@ -66,7 +66,7 @@ public class WorldStyle implements ILostCityAsset {
         return outsideStyle;
     }
 
-    @Nonnull
+    @NotNull
     public PartSelector getPartSelector() {
         return partSelector;
     }
@@ -85,8 +85,8 @@ public class WorldStyle implements ILostCityAsset {
     }
 
     public float getCityChanceMultiplier(IDimensionInfo provider, ChunkCoord coord) {
-        Holder<Biome> biome = BiomeInfo.getBiomeInfo(provider, coord).getMainBiome();
-        for (Pair<Predicate<Holder<Biome>>, Float> pair : cityBiomeMultiplier) {
+        RegistryEntry<Biome> biome = BiomeInfo.getBiomeInfo(provider, coord).getMainBiome();
+        for (Pair<Predicate<RegistryEntry<Biome>>, Float> pair : cityBiomeMultiplier) {
             if (pair.getLeft().test(biome)) {
                 return pair.getRight();
             }
@@ -95,9 +95,9 @@ public class WorldStyle implements ILostCityAsset {
     }
 
     public String getRandomCityStyle(IDimensionInfo provider, ChunkCoord coord, Random random) {
-        Holder<Biome> biome = BiomeInfo.getBiomeInfo(provider, coord).getMainBiome();
+        RegistryEntry<Biome> biome = BiomeInfo.getBiomeInfo(provider, coord).getMainBiome();
         List<Pair<Float, String>> ct = new ArrayList<>();
-        for (Pair<Predicate<Holder<Biome>>, Pair<Float, String>> pair : cityStyleSelector) {
+        for (Pair<Predicate<RegistryEntry<Biome>>, Pair<Float, String>> pair : cityStyleSelector) {
             if (pair.getKey().test(biome)) {
                 ct.add(pair.getValue());
             }

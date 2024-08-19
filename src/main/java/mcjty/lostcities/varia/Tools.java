@@ -5,24 +5,24 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.commands.arguments.blocks.BlockStateParser;
-import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.tags.TagKey;
-import net.minecraft.util.RandomSource;
-import net.minecraft.util.datafix.fixes.BlockStateData;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.command.argument.BlockArgumentParser;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.server.world.ServerChunkManager;
+import net.minecraft.registry.tag.TagKey;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.datafixer.fix.BlockStateFlattening;
+import net.minecraft.world.WorldView;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.state.property.Property;
+import net.minecraftforge.registries.ForgeRegistryKeys;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,16 +43,16 @@ public class Tools {
         }
 
         private <T extends Comparable<T>> String getName(Property<T> property, Comparable<?> comparable) {
-            return property.getName((T)comparable);
+            return property.name((T)comparable);
         }
     };
 
     public static String stateToString(BlockState state) {
         StringBuilder stringbuilder = new StringBuilder();
-        stringbuilder.append(ForgeRegistries.BLOCKS.getKey(state.getBlock()));
-        if (!state.getValues().isEmpty()) {
+        stringbuilder.append(ForgeRegistryKeys.BLOCKS.getKey(state.getBlock()));
+        if (!state.getEntries().isEmpty()) {
             stringbuilder.append('[');
-            stringbuilder.append(state.getValues().entrySet().stream().map(PROPERTY_MAPPER).collect(Collectors.joining(",")));
+            stringbuilder.append(state.getEntries().entrySet().stream().map(PROPERTY_MAPPER).collect(Collectors.joining(",")));
             stringbuilder.append(']');
         }
 
@@ -62,40 +62,40 @@ public class Tools {
     public static BlockState stringToState(String s) {
         if (s.contains("[")) {
             try {
-                BlockStateParser.BlockResult parser = BlockStateParser.parseForBlock(WorldTools.getOverworld().holderLookup(Registries.BLOCK), new StringReader(s), false);
+                BlockArgumentParser.BlockResult parser = BlockArgumentParser.parseForBlock(WorldTools.getOverworld().holderLookup(RegistryKeys.BLOCK), new StringReader(s), false);
                 return parser.blockState();
             } catch (CommandSyntaxException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        String converted = BlockStateData.upgradeBlock(s);
-        Block value = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(converted));
+        String converted = BlockStateFlattening.upgradeBlock(s);
+        Block value = ForgeRegistryKeys.BLOCKS.getValue(Identifier.of(converted));
         if (value == null) {
             throw new RuntimeException("Cannot find block: '" + s + "'!");
         }
-        return value.defaultBlockState();
+        return value.getDefaultState();
     }
 
-    public static <T> T getRandomFromList(RandomSource random, List<T> list, Function<T, Float> weightGetter) {
-        if (list.isEmpty()) {
-            return null;
-        }
-        List<T> elements = new ArrayList<>();
-        float totalweight = 0;
-        for (T pair : list) {
-            elements.add(pair);
-            totalweight += weightGetter.apply(pair);
-        }
-        float r = random.nextFloat() * totalweight;
-        for (T pair : elements) {
-            r -= weightGetter.apply(pair);
-            if (r <= 0) {
-                return pair;
-            }
-        }
-        return elements.get(elements.size() - 1);
-    }
+    // public static <T> T getRandomFromList(Random random, List<T> list, Function<T, Float> weightGetter) {
+    //     if (list.isEmpty()) {
+    //         return null;
+    //     }
+    //     List<T> elements = new ArrayList<>();
+    //     float totalweight = 0;
+    //     for (T pair : list) {
+    //         elements.add(pair);
+    //         totalweight += weightGetter.apply(pair);
+    //     }
+    //     float r = random.nextFloat() * totalweight;
+    //     for (T pair : elements) {
+    //         r -= weightGetter.apply(pair);
+    //         if (r <= 0) {
+    //             return pair;
+    //         }
+    //     }
+    //     return elements.get(elements.size() - 1);
+    // }
 
     public static <T> T getRandomFromList(Random random, List<T> list, Function<T, Float> weightGetter) {
         if (list.isEmpty()) {
@@ -117,19 +117,19 @@ public class Tools {
         return null;
     }
 
-    public static Iterable<Holder<Block>> getBlocksForTag(TagKey<Block> rl) {
-        @SuppressWarnings("deprecation") DefaultedRegistry<Block> registry = BuiltInRegistries.BLOCK;
-        return registry.getTagOrEmpty(rl);
+    public static Iterable<RegistryEntry<Block>> getBlocksForTag(TagKey<Block> rl) {
+        @SuppressWarnings("deprecation") DefaultedRegistry<Block> registry = Registries.BLOCK;
+        return registry.iterateEntries(rl);
     }
 
     public static boolean hasTag(Block block, TagKey<Block> tag) {
-        //noinspection deprecation
-        return BuiltInRegistries.BLOCK.getHolderOrThrow(block.builtInRegistryHolder().key()).is(tag);
+        //modern tag solution I think
+        return block.getDefaultState().isIn(tag);
     }
 
-    public static int getSeaLevel(LevelReader level) {
-        if (level instanceof WorldGenLevel wgLevel) {
-            if (wgLevel.getChunkSource() instanceof ServerChunkCache scc) {
+    public static int getSeaLevel(WorldView level) {
+        if (level instanceof StructureWorldAccess wgLevel) {
+            if (wgLevel.getChunkSource() instanceof ServerChunkManager scc) {
                 return scc.getGenerator().getSeaLevel();
             }
         }

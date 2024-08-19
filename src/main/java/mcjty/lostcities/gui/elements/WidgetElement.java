@@ -1,12 +1,12 @@
 package mcjty.lostcities.gui.elements;
 
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 
 public class WidgetElement extends GuiElement {
 
-    private final AbstractWidget widget;
+    private final ClickableWidget widget;
 
-    public WidgetElement(AbstractWidget widget, String page, int x, int y) {
+    public WidgetElement(ClickableWidget widget, String page, int x, int y) {
         super(page, x, y);
         this.widget = widget;
     }

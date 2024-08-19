@@ -3,8 +3,8 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.cityassets.Scattered;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.StringRepresentable;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.StringIdentifiable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -16,12 +16,12 @@ public class ScatteredRE implements IAsset<ScatteredRE> {
             instance.group(
                     Codec.list(Codec.STRING).optionalFieldOf("buildings").forGetter(l -> Optional.ofNullable(l.buildings)),
                     Codec.STRING.optionalFieldOf("multibuilding").forGetter(l -> Optional.ofNullable(l.multibuilding)),
-                    StringRepresentable.fromEnum(Scattered.TerrainHeight::values).fieldOf("terrainheight").forGetter(l -> l.terrainheight),
-                    StringRepresentable.fromEnum(Scattered.TerrainFix::values).fieldOf("terrainfix").forGetter(l -> l.terrainfix),
+                    StringIdentifiable.fromEnum(Scattered.TerrainHeight::values).fieldOf("terrainheight").forGetter(l -> l.terrainheight),
+                    StringIdentifiable.fromEnum(Scattered.TerrainFix::values).fieldOf("terrainfix").forGetter(l -> l.terrainfix),
                     Codec.INT.optionalFieldOf("heightoffset", 0).forGetter(l -> l.heightoffset)
             ).apply(instance, ScatteredRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final Scattered.TerrainHeight terrainheight;
     private final Scattered.TerrainFix terrainfix;
     private final int heightoffset;
@@ -60,13 +60,13 @@ public class ScatteredRE implements IAsset<ScatteredRE> {
     }
 
     @Override
-    public ScatteredRE setRegistryName(ResourceLocation name) {
+    public ScatteredRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

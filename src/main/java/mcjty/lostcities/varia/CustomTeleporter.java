@@ -1,17 +1,23 @@
 package mcjty.lostcities.varia;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.portal.PortalForcer;
-import net.minecraftforge.common.util.ITeleporter;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.TeleportTarget;
+import net.minecraft.world.TeleportTarget.PostDimensionTransition;
+import net.minecraft.world.dimension.PortalForcer;
 
 import java.util.function.Function;
 
 public class CustomTeleporter extends PortalForcer {
+    
+    private final ServerWorld worldServer;
+    private final double x;
+    private final double y;
+    private final double z;
 
-    public CustomTeleporter(ServerLevel world, double x, double y, double z) {
+    public CustomTeleporter(ServerWorld world, double x, double y, double z) {
         super(world);
         this.worldServer = world;
         this.x = x;
@@ -19,33 +25,28 @@ public class CustomTeleporter extends PortalForcer {
         this.z = z;
     }
 
-    private final ServerLevel worldServer;
-    private final double x;
-    private final double y;
-    private final double z;
 
-    @Override
-    public Entity placeEntity(Entity entity, ServerLevel currentWorld, ServerLevel destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
-        this.worldServer.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z));
+    // I don't see any code using it and I don't know why it's here so, skaddadle skadoodle your dick is now a noodle :3
 
-        entity.setPos(this.x, this.y, this.z);
-        entity.setDeltaMovement(0, 0, 0);
-        return entity;
-    }
+    // @Override
+    // public Entity placeEntity(Entity entity, ServerWorld currentWorld, ServerWorld destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
+    //     this.worldServer.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z));
 
-    public static void teleportToDimension(Player player, ServerLevel dimension, BlockPos pos){
+    //     entity.setPos(this.x, this.y, this.z);
+    //     entity.setVelocity(0, 0, 0);
+    //     return entity;
+    // }
+
+    public static void teleportToDimension(PlayerEntity player, ServerWorld dimension, BlockPos pos){
         teleportToDimension(player, dimension, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
     }
 
-    public static void teleportToDimension(Player player, ServerLevel dimension, double x, double y, double z) {
-        player.changeDimension(dimension, new ITeleporter() {
-            @Override
-            public Entity placeEntity(Entity entity, ServerLevel currentWorld, ServerLevel destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
-                entity = repositionEntity.apply(false);
-                entity.teleportTo(x, y, z);
-                return entity;
+    public static void teleportToDimension(PlayerEntity player, ServerWorld dimension, double x, double y, double z) {
+        player.teleportTo(new TeleportTarget(dimension, player, new PostDimensionTransition() {
+			public void onTransition(Entity entity){
+                //nothing?
             }
-        });
+        } ));
     }
 
 }

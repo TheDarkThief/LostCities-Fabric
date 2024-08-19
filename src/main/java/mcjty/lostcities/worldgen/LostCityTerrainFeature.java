@@ -10,49 +10,66 @@ import mcjty.lostcities.editor.EditModeData;
 import mcjty.lostcities.setup.Config;
 import mcjty.lostcities.setup.ModSetup;
 import mcjty.lostcities.varia.*;
+import mcjty.lostcities.worldgen.LostCityTerrainFeature.HardAirSetting;
 import mcjty.lostcities.worldgen.lost.*;
 import mcjty.lostcities.worldgen.lost.cityassets.*;
 import mcjty.lostcities.worldgen.lost.regassets.StuffSettingsRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.*;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.WorldGenRegion;
-import net.minecraft.tags.BiomeTags;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.StructureTags;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.SpawnData;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.DoorHingeSide;
-import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.block.state.properties.RailShape;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.util.Identifier;
+import net.minecraft.server.world.ServerChunkManager;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.ChunkRegion;
+import net.minecraft.registry.tag.BiomeTags;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.StructureTags;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.FlowerBlock;
+import net.minecraft.block.LeavesBlock;
+import net.minecraft.block.PoweredRailBlock;
+import net.minecraft.block.RailBlock;
+import net.minecraft.block.SaplingBlock;
+import net.minecraft.block.StairsBlock;
+import net.minecraft.block.WallTorchBlock;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.entity.LootableContainerBlockEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.spawner.MobSpawnerEntry;
+import net.minecraft.block.enums.DoorHinge;
+import net.minecraft.block.enums.DoubleBlockHalf;
+import net.minecraft.state.property.EnumProperty;
+import net.minecraft.block.enums.RailShape;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.gen.noise.NoiseConfig;
+import net.minecraft.world.gen.structure.Structure;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistryKeys;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import java.util.*;
+import net.minecraft.util.math.random.Random;
+
+import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -94,13 +111,13 @@ public class LostCityTerrainFeature {
 
     private final IDimensionInfo provider;
     private final LostCityProfile profile;
-    private final RandomSource rand;
+    private final Random rand;
 
     private final Map<ChunkCoord, ChunkHeightmap> cachedHeightmaps = new HashMap<>();
     private final Statistics statistics = new Statistics();
     private final Map<Block, BlockEntityType> typeCache = new HashMap<>();
 
-    public LostCityTerrainFeature(IDimensionInfo provider, LostCityProfile profile, RandomSource rand) {
+    public LostCityTerrainFeature(IDimensionInfo provider, LostCityProfile profile, Random rand) {
         this.provider = provider;
         this.profile = profile;
         this.rand = rand;
@@ -112,8 +129,8 @@ public class LostCityTerrainFeature {
         this.ruinNoise = new NoiseGeneratorPerlin(rand, 4);
         this.bottomLayerNoise = new NoiseGeneratorPerlin(rand, 4);
 
-        air = Blocks.AIR.defaultBlockState();
-        hardAir = Blocks.STRUCTURE_VOID.defaultBlockState();
+        air = Blocks.AIR.getDefaultState();
+        hardAir = Blocks.STRUCTURE_VOID.getDefaultState();
 
 //        islandTerrainGenerator.setup(provider.getWorld().getWorld(), provider);
 //        cavernTerrainGenerator.setup(provider.getWorld().getWorld(), provider);
@@ -126,9 +143,9 @@ public class LostCityTerrainFeature {
             return compiledPalette.get(leavesBlock);
         }
         if (randomLeafs == null) {
-            BlockState leaves = Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-            BlockState leaves2 = Blocks.JUNGLE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-            BlockState leaves3 = Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+            BlockState leaves = Blocks.OAK_LEAVES.getDefaultState().with(LeavesBlock.PERSISTENT, true);
+            BlockState leaves2 = Blocks.JUNGLE_LEAVES.getDefaultState().with(LeavesBlock.PERSISTENT, true);
+            BlockState leaves3 = Blocks.SPRUCE_LEAVES.getDefaultState().with(LeavesBlock.PERSISTENT, true);
 
             randomLeafs = new BlockState[128];
             int i = 0;
@@ -166,9 +183,9 @@ public class LostCityTerrainFeature {
         }
         if (randomDirt == null) {
             randomDirtSet = new HashSet<>();
-            BlockState mBricks = Blocks.MOSSY_STONE_BRICKS.defaultBlockState();
-            BlockState mCobble = Blocks.MOSSY_COBBLESTONE.defaultBlockState();
-            BlockState moss = Blocks.MOSS_BLOCK.defaultBlockState();
+            BlockState mBricks = Blocks.MOSSY_STONE_BRICKS.getDefaultState();
+            BlockState mCobble = Blocks.MOSSY_COBBLESTONE.getDefaultState();
+            BlockState moss = Blocks.MOSS_BLOCK.getDefaultState();
             randomDirtSet.add(mBricks);
             randomDirtSet.add(mCobble);
             randomDirtSet.add(moss);
@@ -203,10 +220,10 @@ public class LostCityTerrainFeature {
     private Set<BlockState> getStatesNeedingTodo() {
         if (statesNeedingTodo == null) {
             statesNeedingTodo = new HashSet<>();
-            for (Holder<Block> bh : Tools.getBlocksForTag(BlockTags.SAPLINGS)) {
+            for (RegistryEntry<Block> bh : Tools.getBlocksForTag(BlockTags.SAPLINGS)) {
                 addStates(bh.value(), statesNeedingTodo);
             }
-            for (Holder<Block> bh : Tools.getBlocksForTag(BlockTags.SMALL_FLOWERS)) {
+            for (RegistryEntry<Block> bh : Tools.getBlocksForTag(BlockTags.SMALL_FLOWERS)) {
                 addStates(bh.value(), statesNeedingTodo);
             }
         }
@@ -216,7 +233,7 @@ public class LostCityTerrainFeature {
     private Set<BlockState> getStatesNeedingLightingUpdate() {
         if (statesNeedingLightingUpdate == null) {
             statesNeedingLightingUpdate = new HashSet<>();
-            for (Holder<Block> bh : Tools.getBlocksForTag(LostTags.LIGHTS_TAG)) {
+            for (RegistryEntry<Block> bh : Tools.getBlocksForTag(LostTags.LIGHTS_TAG)) {
                 addStates(bh.value(), statesNeedingLightingUpdate);
             }
         }
@@ -226,7 +243,7 @@ public class LostCityTerrainFeature {
     private Set<BlockState> getStatesNeedingPoiUpdate() {
         if (statesNeedingPoiUpdate == null) {
             statesNeedingPoiUpdate = new HashSet<>();
-            for (Holder<Block> bh : Tools.getBlocksForTag(LostTags.NEEDSPOI_TAG)) {
+            for (RegistryEntry<Block> bh : Tools.getBlocksForTag(LostTags.NEEDSPOI_TAG)) {
                 addStates(bh.value(), statesNeedingPoiUpdate);
             }
         }
@@ -234,7 +251,7 @@ public class LostCityTerrainFeature {
     }
 
     private static void addStates(Block block, Set<BlockState> set) {
-        set.addAll(block.getStateDefinition().getPossibleStates());
+        set.addAll(block.getStateManager().getStates());
     }
 
     public void setupStates(LostCityProfile profile) {
@@ -256,18 +273,18 @@ public class LostCityTerrainFeature {
 
     private boolean isVoid(int x, int z) {
         driver.current(x, 255, z);
-        int minHeight = provider.getWorld().getMinBuildHeight();
+        int minHeight = provider.getWorld().getTopY();
         while (driver.getBlock() == air && driver.getY() > minHeight) {
             driver.decY();
         }
         return driver.getY() == minHeight;
     }
 
-    public void generate(WorldGenRegion region, ChunkAccess chunk) {
+    public void generate(ChunkRegion region, Chunk chunk) {
         long start = System.currentTimeMillis();
 
-        LevelAccessor oldRegion = driver.getRegion();
-        ChunkAccess oldChunk = driver.getPrimer();
+        WorldAccess oldRegion = driver.getRegion();
+        Chunk oldChunk = driver.getPrimer();
         driver.setPrimer(region, chunk);
 
         int chunkX = chunk.getPos().x;
@@ -307,7 +324,7 @@ public class LostCityTerrainFeature {
             if (CitySphere.isCitySphereCenter(coord, provider)) {
                 CitySphereSettings settings = provider.getWorldStyle().getCitysphereSettings();
                 if (settings != null && settings.getCenterpart() != null) {
-                    BuildingPart part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), settings.getCenterpart());
+                    BuildingPart part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), settings.getCenterpart());
                     int offset = settings.getCenterPartOffset();
                     int partY = switch (settings.getCenterPartOrigin()) {
                         case FIXED -> 0;
@@ -368,11 +385,11 @@ public class LostCityTerrainFeature {
         }
     }
 
-    public void generateSpheres(WorldGenRegion region, ChunkAccess chunk) {
+    public void generateSpheres(ChunkRegion region, Chunk chunk) {
         // Do the city spheres
         if (profile.isSpace() || profile.isSpheres()) {
-            LevelAccessor oldRegion = driver.getRegion();
-            ChunkAccess oldChunk = driver.getPrimer();
+            WorldAccess oldRegion = driver.getRegion();
+            Chunk oldChunk = driver.getPrimer();
             driver.setPrimer(region, chunk);
 
             int chunkX = chunk.getPos().x;
@@ -400,12 +417,12 @@ public class LostCityTerrainFeature {
         }
     }
 
-    private boolean hasBlacklistedStructure(WorldGenRegion region, int chunkX, int chunkZ) {
+    private boolean hasBlacklistedStructure(ChunkRegion region, int chunkX, int chunkZ) {
         boolean doAdjacent = Config.AVOID_VILLAGES_ADJACENT.get() || Config.AVOID_STRUCTURES_ADJACENT.get();
         if (doAdjacent) {
             for (int dx = -1 ; dx <= 1 ; dx++) {
                 for (int dz = -1 ; dz <= 1 ; dz++) {
-                    ChunkAccess ch = region.getChunk(chunkX + dx, chunkZ + dx);
+                    Chunk ch = region.getChunk(chunkX + dx, chunkZ + dx);
                     if (testBlacklistedStructure(ch, chunkX == 0 && chunkZ == 0)) {
                         return true;
                     }
@@ -413,27 +430,27 @@ public class LostCityTerrainFeature {
 
             }
         } else {
-            ChunkAccess ch = region.getChunk(chunkX, chunkZ);
+            Chunk ch = region.getChunk(chunkX, chunkZ);
             return testBlacklistedStructure(ch, true);
         }
         return false;
     }
 
-    private boolean testBlacklistedStructure(ChunkAccess ch, boolean center) {
-        if (ch.hasAnyStructureReferences()) {
-            var structures = provider.getWorld().registryAccess().registryOrThrow(Registries.STRUCTURE);
-            var references = ch.getAllReferences();
+    private boolean testBlacklistedStructure(Chunk ch, boolean center) {
+        if (ch.hasStructureReferences()) {
+            var structures = provider.getWorld().getRegistryManager().get(RegistryKeys.STRUCTURE);
+            var references = ch.getStructureReferences();
             // @todo we can do this more optimally if we first find all configured structures for village
             for (var entry : references.entrySet()) {
                 if (!entry.getValue().isEmpty()) {
-                    Optional<ResourceKey<Structure>> key = structures.getResourceKey(entry.getKey());
+                    Optional<RegistryKey<Structure>> key = structures.getKey(entry.getKey());
                     if (center || Config.AVOID_VILLAGES_ADJACENT.get()) {
-                        if (key.map(k -> structures.getHolderOrThrow(k).is(StructureTags.VILLAGE)).orElse(false)) {
+                        if (key.map(k -> structures.get(k).isIn(StructureTags.VILLAGE)).orElse(false)) {
                             return true;
                         }
                     }
                     if (center || Config.AVOID_STRUCTURES_ADJACENT.get()) {
-                        if (Config.isAvoidedStructure(key.get().location())) {
+                        if (Config.isAvoidedStructure(key.get().getValue())) {
                             return true;
                         }
                     }
@@ -449,14 +466,14 @@ public class LostCityTerrainFeature {
         double sqradiusOffset = (radius - 2) * (radius - 2);
         double sqradiusOuter = (radius + 2) * (radius + 2);
 
-        int minY = Math.max(provider.getWorld().getMinBuildHeight(), centery - radius - 1);
-        int maxY = Math.min(provider.getWorld().getMaxBuildHeight(), centery + radius + 1);
+        int minY = Math.max(provider.getWorld().getBottomY(), centery - radius - 1);
+        int maxY = Math.min(provider.getWorld().getTopY(), centery + radius + 1);
         int seaLevel = Tools.getSeaLevel(provider.getWorld());
         ChunkGenerator generator;
-        if (provider.getWorld() instanceof WorldGenRegion region) {
-            generator = ((ServerChunkCache) region.getChunkSource()).getGenerator();
+        if (provider.getWorld() instanceof ChunkRegion region) {
+            generator = ((ServerChunkManager) region.getChunkManager()).getChunkGenerator();
         } else {
-            generator = ((ServerLevel) provider.getWorld()).getChunkSource().getGenerator();
+            generator = ((ServerWorld) provider.getWorld()).getChunkManager().getChunkGenerator();
         }
         int outerSeaLevel = -1000;
         if (generator instanceof ILostWorldsChunkGenerator lw) {
@@ -495,7 +512,7 @@ public class LostCityTerrainFeature {
                             // Optionally clear above the sphere
                             int yy = y;
                             if (profile.CITYSPHERE_CLEARABOVE > 0) {
-                                int mY = Math.min(provider.getWorld().getMaxBuildHeight(), y + profile.CITYSPHERE_CLEARABOVE);
+                                int mY = Math.min(provider.getWorld().getTopY(), y + profile.CITYSPHERE_CLEARABOVE);
                                 while (yy <= mY) {
                                     driver.block(yy <= outerSeaLevel ? liquid : air);
                                     driver.incY();
@@ -514,7 +531,7 @@ public class LostCityTerrainFeature {
                             yy = bottom;
                             if (profile.CITYSPHERE_CLEARBELOW > 0 && bottom != Integer.MAX_VALUE) {
                                 driver.current(x, yy, z);
-                                int mY = Math.max(provider.getWorld().getMinBuildHeight(), bottom - profile.CITYSPHERE_CLEARBELOW);
+                                int mY = Math.max(provider.getWorld().getBottomY(), bottom - profile.CITYSPHERE_CLEARBELOW);
                                 while (yy >= mY) {
                                     driver.block(yy <= outerSeaLevel ? liquid : air);
                                     driver.decY();
@@ -524,7 +541,7 @@ public class LostCityTerrainFeature {
                             if (profile.CITYSPHERE_CLEARBELOW_UNTIL_AIR && bottom != Integer.MAX_VALUE) {
                                 // Clear until we hit air or go below build limit
                                 driver.current(x, yy, z);
-                                while (driver.getBlock() != (yy <= seaLevel ? liquid : air) && yy > provider.getWorld().getMinBuildHeight()) {
+                                while (driver.getBlock() != (yy <= seaLevel ? liquid : air) && yy > provider.getWorld().getBottomY()) {
                                     driver.block(yy <= outerSeaLevel ? liquid : air);
                                     driver.decY();
                                     yy--;
@@ -556,7 +573,7 @@ public class LostCityTerrainFeature {
         boolean vert = info.hasVerticalMonorail();
         if (horiz && vert) {
             if (!CitySphere.intersectsWithCitySphere(info.coord, provider)) {
-                BuildingPart part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), monoRailParts.both());
+                BuildingPart part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), monoRailParts.both());
                 generatePart(info, part, Transform.ROTATE_NONE, 0, mainGroundLevel + info.profile.CITYSPHERE_MONORAIL_HEIGHT_OFFSET, 0, HardAirSetting.WATERLEVEL);
             }
             return;
@@ -572,22 +589,22 @@ public class LostCityTerrainFeature {
         if (CitySphere.fullyInsideCitySpere(info.coord, provider)) {
             // If there is a non-enclosed monorail nearby we generate a station
             if (hasNonStationMonoRail(info.getXmin())) {
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
                 Character borderBlock = info.getCityStyle().getBorderBlock();
                 transform = Transform.MIRROR_90_X; // flip
                 fillToGround(info, mainGroundLevel + info.profile.CITYSPHERE_MONORAIL_HEIGHT_OFFSET, borderBlock);
             } else if (hasNonStationMonoRail(info.getXmax())) {
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
                 Character borderBlock = info.getCityStyle().getBorderBlock();
                 transform = Transform.ROTATE_90;
                 fillToGround(info, mainGroundLevel + info.profile.CITYSPHERE_MONORAIL_HEIGHT_OFFSET, borderBlock);
             } else if (hasNonStationMonoRail(info.getZmin())) {
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
                 Character borderBlock = info.getCityStyle().getBorderBlock();
                 transform = Transform.ROTATE_NONE;
                 fillToGround(info, mainGroundLevel + info.profile.CITYSPHERE_MONORAIL_HEIGHT_OFFSET, borderBlock);
             } else if (hasNonStationMonoRail(info.getZmax())) {
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), monoRailParts.station());
                 Character borderBlock = info.getCityStyle().getBorderBlock();
                 transform = Transform.MIRROR_Z; // flip
                 fillToGround(info, mainGroundLevel + info.profile.CITYSPHERE_MONORAIL_HEIGHT_OFFSET, borderBlock);
@@ -595,7 +612,7 @@ public class LostCityTerrainFeature {
                 return;
             }
         } else {
-            part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), monoRailParts.vertical());
+            part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), monoRailParts.vertical());
         }
 
         generatePart(info, part, transform, 0, mainGroundLevel + info.profile.CITYSPHERE_MONORAIL_HEIGHT_OFFSET, 0, HardAirSetting.WATERLEVEL);
@@ -611,23 +628,23 @@ public class LostCityTerrainFeature {
             return;
         }
 
-        BlockState torchState = Blocks.WALL_TORCH.defaultBlockState();
+        BlockState torchState = Blocks.WALL_TORCH.getDefaultState();
         for (BlockPos pos : torches) {
             int x = pos.getX() & 0xf;
             int z = pos.getZ() & 0xf;
             driver.currentAbsolute(pos);
             if (driver.getBlockDown() != air) {
-                driver.block(Blocks.TORCH.defaultBlockState());
+                driver.block(Blocks.TORCH.getDefaultState());
             } else if (x > 0 && driver.getBlockWest() != air) {
-                driver.block(torchState.setValue(WallTorchBlock.FACING, net.minecraft.core.Direction.EAST));
+                driver.block(torchState.with(WallTorchBlock.FACING, net.minecraft.util.math.Direction.EAST));
             } else if (x < 15 && driver.getBlockEast() != air) {
-                driver.block(torchState.setValue(WallTorchBlock.FACING, net.minecraft.core.Direction.WEST));
+                driver.block(torchState.with(WallTorchBlock.FACING, net.minecraft.util.math.Direction.WEST));
             } else if (z > 0 && driver.getBlockNorth() != air) {
-                driver.block(torchState.setValue(WallTorchBlock.FACING, net.minecraft.core.Direction.SOUTH));
+                driver.block(torchState.with(WallTorchBlock.FACING, net.minecraft.util.math.Direction.SOUTH));
             } else if (z < 15 && driver.getBlockSouth() != air) {
-                driver.block(torchState.setValue(WallTorchBlock.FACING, net.minecraft.core.Direction.NORTH));
+                driver.block(torchState.with(WallTorchBlock.FACING, net.minecraft.util.math.Direction.NORTH));
             }
-            updateNeeded(info, pos, Block.UPDATE_CLIENTS);
+            updateNeeded(info, pos, Block.NOTIFY_LISTENERS);
         }
         info.clearTorchTodo();
     }
@@ -678,19 +695,19 @@ public class LostCityTerrainFeature {
         }
 
         // Find the right type of scattered asset for this area
-        ScatteredReference reference = selectRandomScattered(info, scatteredSettings, scatteredRandom);
+        ScatteredReference reference = selectRandomScattered(info, scatteredSettings, (Random)scatteredRandom);
         if (reference == null) {
             // Nothing matches
             return;
         }
-        Scattered scattered = AssetRegistries.SCATTERED.getOrThrow(provider.getWorld(), reference.getName());
+        Scattered scattered = AssetRegistryKeys.SCATTERED.getOrThrow(provider.getWorld(), reference.getName());
 
         // Find the size of the scattered building
         int w;
         int h;
         MultiBuilding multiBuilding;
         if (scattered.getMultibuilding() != null) {
-            multiBuilding = AssetRegistries.MULTI_BUILDINGS.getOrThrow(provider.getWorld(), scattered.getMultibuilding());
+            multiBuilding = AssetRegistryKeys.MULTI_BUILDINGS.getOrThrow(provider.getWorld(), scattered.getMultibuilding());
             w = multiBuilding.getDimX();
             h = multiBuilding.getDimZ();
         } else {
@@ -724,7 +741,7 @@ public class LostCityTerrainFeature {
                 if (!reference.isAllowVoid()) {
                     if (!(profile.isDefault() || profile.isCavern())) {
                         // We are in a world that can have void chunks. Check if this chunk is a void chunk
-                        if (hm.getHeight() <= this.provider.getWorld().getMinBuildHeight() + 3) {
+                        if (hm.getHeight() <= this.provider.getWorld().getBottomY() + 3) {
                             return;
                         }
                     }
@@ -758,16 +775,16 @@ public class LostCityTerrainFeature {
             } else {
                 buildingName = buildings.get(scatteredRandom.nextInt(buildings.size()));
             }
-            Building building = AssetRegistries.BUILDINGS.getOrThrow(provider.getWorld(), buildingName);
+            Building building = AssetRegistryKeys.BUILDINGS.getOrThrow(provider.getWorld(), buildingName);
             int lowestLevel = handleScatteredTerrain(info, scattered, heightmap);
-            generateScatteredBuilding(info, building, scatteredRandom, lowestLevel, scattered.getTerrainfix());
+            generateScatteredBuilding(info, building, (Random)scatteredRandom, lowestLevel, scattered.getTerrainfix());
         } else {
             int lowestLevel = handleScatteredTerrainMulti(info, scattered, multiBuilding, minheight, maxheight, avgheight);
             int relx = chunkX - tlChunkX;
             int relz = chunkZ - tlChunkZ;
             String buildingName = multiBuilding.getBuilding(relx, relz);
-            Building building = AssetRegistries.BUILDINGS.getOrThrow(provider.getWorld(), buildingName);
-            generateScatteredBuilding(info, building, scatteredRandom, lowestLevel, scattered.getTerrainfix());
+            Building building = AssetRegistryKeys.BUILDINGS.getOrThrow(provider.getWorld(), buildingName);
+            generateScatteredBuilding(info, building, (Random)scatteredRandom, lowestLevel, scattered.getTerrainfix());
         }
     }
 
@@ -844,15 +861,15 @@ public class LostCityTerrainFeature {
                 }
 
                 @Override
-                public ResourceLocation getBiome() {
-                    Holder<Biome> biome = provider.getWorld().getBiome(new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
-                    return biome.unwrap().map(ResourceKey::location, b -> provider.getWorld().registryAccess().registryOrThrow(Registries.BIOME).getKey(b));
+                public Identifier getBiome() {
+                    RegistryEntry<Biome> biome = provider.getWorld().getBiome(new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
+                    return biome.getKeyOrValue().map(RegistryKey::getRegistry, b -> provider.getWorld().getRegistryManager().get(RegistryKeys.BIOME).getKey(b));
                 }
             };
             String randomPart = building.getRandomPart(rand, conditionContext);
-            BuildingPart part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), randomPart);
+            BuildingPart part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), randomPart);
             randomPart = building.getRandomPart2(rand, conditionContext);
-            BuildingPart part2 = AssetRegistries.PARTS.get(provider.getWorld(), randomPart);    // Null is legal
+            BuildingPart part2 = AssetRegistryKeys.PARTS.get(provider.getWorld(), randomPart);    // Null is legal
 
             if (f == 0) {
                 switch (terrainFix) {
@@ -898,7 +915,7 @@ public class LostCityTerrainFeature {
             case LOWEST -> heightmap.getHeight();
             case AVERAGE -> heightmap.getHeight();
             case HIGHEST -> heightmap.getHeight();
-            case OCEAN -> ((ServerChunkCache) provider.getWorld().getChunkSource()).getGenerator().getSeaLevel();
+            case OCEAN -> ((ServerChunkManager) provider.getWorld().getChunkSource()).getGenerator().getSeaLevel();
         };
         lowestLevel += scattered.getHeightoffset();
         return lowestLevel;
@@ -909,7 +926,7 @@ public class LostCityTerrainFeature {
             case LOWEST -> minimum;
             case AVERAGE -> maximum;
             case HIGHEST -> average;
-            case OCEAN -> ((ServerChunkCache) provider.getWorld().getChunkSource()).getGenerator().getSeaLevel();
+            case OCEAN -> ((ServerChunkManager) provider.getWorld().getChunkSource()).getGenerator().getSeaLevel();
         };
         lowestLevel += scattered.getHeightoffset();
         return lowestLevel;
@@ -1022,7 +1039,7 @@ public class LostCityTerrainFeature {
     }
 
     private static boolean isClearableAboveHighway(BlockState st) {
-        return !st.is(BlockTags.LEAVES) && !st.is(BlockTags.LOGS);
+        return !st.isIn(BlockTags.LEAVES) && !st.isIn(BlockTags.LOGS);
     }
 
     private String getRandomPart(List<String> parts) {
@@ -1040,11 +1057,11 @@ public class LostCityTerrainFeature {
         BuildingPart part;
         if (info.isTunnel(level)) {
             // We know we need a tunnel
-            part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(highwayParts.tunnel(bidirectional)));
+            part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(highwayParts.tunnel(bidirectional)));
             generatePart(info, part, transform, 0, highwayGroundLevel, 0, HardAirSetting.WATERLEVEL);
         } else if (info.isCity && level <= adjacent1.cityLevel && level <= adjacent2.cityLevel && adjacent1.isCity && adjacent2.isCity) {
             // Simple highway in the city
-            part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(highwayParts.open(bidirectional)));
+            part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(highwayParts.open(bidirectional)));
             int height = generatePart(info, part, transform, 0, highwayGroundLevel, 0, HardAirSetting.WATERLEVEL);
             // Clear a bit more above the highway
             if (!info.profile.isCavern()) {
@@ -1057,7 +1074,7 @@ public class LostCityTerrainFeature {
                 }
             }
         } else {
-            part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(highwayParts.bridge(bidirectional)));
+            part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(highwayParts.bridge(bidirectional)));
             int height = generatePart(info, part, transform, 0, highwayGroundLevel, 0, HardAirSetting.WATERLEVEL);
             // Clear a bit more above the highway
             if (!info.profile.isCavern()) {
@@ -1256,14 +1273,14 @@ public class LostCityTerrainFeature {
      * or up the top layer (6 thick) of the terrain. In a chunk these heights are interpolated
      * (bilinear interpolation).
      */
-    private boolean correctTerrainShape(WorldGenLevel level, ChunkCoord coord, ChunkHeightmap heightmap) {
+    private boolean correctTerrainShape(StructureWorldAccess level, ChunkCoord coord, ChunkHeightmap heightmap) {
         BuildingInfo info = BuildingInfo.getBuildingInfo(coord, provider);
         BuildingInfo.MinMax mm00 = info.getDesiredMaxHeightL2();
         BuildingInfo.MinMax mm10 = info.getXmax().getDesiredMaxHeightL2();
         BuildingInfo.MinMax mm01 = info.getZmax().getDesiredMaxHeightL2();
         BuildingInfo.MinMax mm11 = info.getXmax().getZmax().getDesiredMaxHeightL2();
 
-        int max = level.getMaxBuildHeight();
+        int max = level.getTopY();
 
         float min00 = mm00.min;
         float min10 = mm10.min;
@@ -1331,10 +1348,10 @@ public class LostCityTerrainFeature {
         if (state.isAir()) {
             return true;
         }
-        if (state.is(Blocks.WATER)) {
+        if (state.isIn(Blocks.WATER)) {
             return true;
         }
-        if (state.is(Blocks.LAVA)) {
+        if (state.isIn(Blocks.LAVA)) {
             return true;
         }
         return false;
@@ -1351,7 +1368,7 @@ public class LostCityTerrainFeature {
     private boolean moveUp(int x, int z, int height, boolean dowater) {
         // Find the first non-empty block starting at the given height
         driver.current(x, height, z);
-        int minHeight = provider.getWorld().getMinBuildHeight();
+        int minHeight = provider.getWorld().getBottomY();
         // We assume here we are not in a void chunk
         while (isFoliageOrEmpty(driver.getBlock()) && driver.getY() > minHeight) {
             driver.decY();
@@ -1419,12 +1436,12 @@ public class LostCityTerrainFeature {
 
     public static boolean isWaterBiome(IDimensionInfo provider, ChunkCoord coord) {
         BiomeInfo biomeInfo = BiomeInfo.getBiomeInfo(provider, coord);
-        Holder<Biome> mainBiome = biomeInfo.getMainBiome();
+        RegistryEntry<Biome> mainBiome = biomeInfo.getMainBiome();
         return isWaterBiome(mainBiome);
     }
 
-    private static boolean isWaterBiome(Holder<Biome> biome) {
-        return biome.is(BiomeTags.IS_OCEAN) || biome.is(BiomeTags.IS_DEEP_OCEAN) || biome.is(BiomeTags.IS_BEACH) || biome.is(BiomeTags.IS_RIVER);
+    private static boolean isWaterBiome(RegistryEntry<Biome> biome) {
+        return biome.isIn(BiomeTags.IS_OCEAN) || biome.isIn(BiomeTags.IS_DEEP_OCEAN) || biome.isIn(BiomeTags.IS_BEACH) || biome.isIn(BiomeTags.IS_RIVER);
     }
 
     /**
@@ -1437,7 +1454,7 @@ public class LostCityTerrainFeature {
      */
     public int getMinHeightAt(BuildingInfo info, int x, int z, ChunkHeightmap heightmap) {
         int height = heightmap.getHeight();
-        WorldGenLevel world = info.provider.getWorld();
+        StructureWorldAccess world = info.provider.getWorld();
         int adjacent;
         if (x == 0) {
             if (z == 0) {
@@ -1465,7 +1482,7 @@ public class LostCityTerrainFeature {
         return Math.min(height, adjacent);
     }
 
-    public ChunkHeightmap getHeightmap(ChunkCoord key, @Nonnull WorldGenLevel world) {
+    public ChunkHeightmap getHeightmap(ChunkCoord key, @NotNull StructureWorldAccess world) {
         synchronized (this) {
             if (cachedHeightmaps.containsKey(key)) {
                 return cachedHeightmaps.get(key);
@@ -1478,13 +1495,13 @@ public class LostCityTerrainFeature {
         }
     }
 
-    private void generateHeightmap(int chunkX, int chunkZ, WorldGenLevel region, ChunkHeightmap heightmap) {
-        ServerChunkCache chunkProvider = region.getLevel().getChunkSource();
-        ChunkGenerator generator = chunkProvider.getGenerator();
+    private void generateHeightmap(int chunkX, int chunkZ, StructureWorldAccess region, ChunkHeightmap heightmap) {
+        ServerChunkManager chunkProvider = region.toServerWorld().getChunkManager();
+        ChunkGenerator generator = chunkProvider.getChunkGenerator();
         int cx = chunkX << 4;
         int cz = chunkZ << 4;
-        RandomState randomState = chunkProvider.randomState();
-        int height = generator.getBaseHeight(cx + 8, cz + 8, Heightmap.Types.OCEAN_FLOOR_WG, region, randomState);
+        NoiseConfig randomState = chunkProvider.getNoiseConfig();
+        int height = generator.getHeight(cx + 8, cz + 8, Heightmap.Type.OCEAN_FLOOR_WG, region, randomState);
         heightmap.update(height);
     }
 
@@ -1493,7 +1510,7 @@ public class LostCityTerrainFeature {
 
         if (info.profile.isDefault() || info.profile.isSpheres()) {
             int minHeight = info.minBuildHeight;
-            BlockState bedrock = Blocks.BEDROCK.defaultBlockState();
+            BlockState bedrock = Blocks.BEDROCK.getDefaultState();
             for (int x = 0; x < 16; ++x) {
                 for (int z = 0; z < 16; ++z) {
                     driver.setBlockRange(x, minHeight, z, minHeight + info.profile.BEDROCK_LAYER, bedrock);
@@ -1516,7 +1533,7 @@ public class LostCityTerrainFeature {
             int ground = info.getCityGroundLevel();
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    boolean moved = moveDown(x, z, ground + 1, provider.getWorld().getMaxBuildHeight());
+                    boolean moved = moveDown(x, z, ground + 1, provider.getWorld().getTopY());
 
                     if (!moved) {
                         moveUp(x, z, ground, info.waterLevel > info.groundLevel);
@@ -1568,13 +1585,13 @@ public class LostCityTerrainFeature {
         BiomeInfo biome = BiomeInfo.getBiomeInfo(provider, info.coord);
         CompiledPalette palette = info.getCompiledPalette();
         for (String tag : info.getCityStyle().getStuffTags()) {
-            List<Stuff> stuffs = AssetRegistries.STUFF_BY_TAG.get(tag);
+            List<Stuff> stuffs = AssetRegistryKeys.STUFF_BY_TAG.get(tag);
             if (stuffs != null) {
                 for (Stuff stuff : stuffs) {
                     StuffSettingsRE settings = stuff.getSettings();
                     Boolean inBuilding = settings.isInBuilding();
                     if (inBuilding != null && inBuilding == info.hasBuilding) {
-                        ResourceLocationMatcher buildingMatcher = settings.getBuildingMatcher();
+                        IdentifierMatcher buildingMatcher = settings.getBuildingMatcher();
                         if (buildingMatcher.isAny() || buildingMatcher.test(info.buildingType.getId())) {
                             if (settings.getBiomeMatcher().test(biome.getMainBiome())) {
                                 actuallyGenerateStuff(info, settings, palette, inBuilding == Boolean.TRUE);
@@ -1594,7 +1611,7 @@ public class LostCityTerrainFeature {
     }
 
     private void actuallyGenerateStuff(BuildingInfo info, StuffSettingsRE settings, CompiledPalette palette, boolean inBuilding) {
-        WorldGenLevel level = info.provider.getWorld();
+        StructureWorldAccess level = info.provider.getWorld();
         int attempts = settings.getAttempts();
         Integer minheight = settings.getMinheight();
         Integer maxheight = settings.getMaxheight();
@@ -1622,7 +1639,7 @@ public class LostCityTerrainFeature {
                 String blocks = settings.getColumn();
                 if (testBlock(settings.getBlockMatcher(), x, y-1, z) && testBlock(settings.getUpperBlockMatcher(), x, y + blocks.length(), z)) {
                     Boolean isSeesky = settings.isSeesky();
-                    if (isSeesky == null || isSeesky == level.canSeeSky(new BlockPos(info.coord.chunkX() * 16 + x, y, info.coord.chunkZ() * 16 + z))) {
+                    if (isSeesky == null || isSeesky == level.isSkyVisible(new BlockPos(info.coord.chunkX() * 16 + x, y, info.coord.chunkZ() * 16 + z))) {
                         // Iterate over all characters of the block
                         boolean ok = true;
                         for (int k = 0; k < blocks.length(); k++) {
@@ -1658,7 +1675,7 @@ public class LostCityTerrainFeature {
 
     private void generateRailways(BuildingInfo info, Railway.RailChunkInfo railInfo, ChunkHeightmap heightmap) {
         RailwayParts railwayParts = provider.getWorldStyle().getPartSelector().railwayParts();
-        int height = info.groundLevel + railInfo.getLevel() * FLOORHEIGHT;
+        int height = info.groundLevel + railInfo.getWorld() * FLOORHEIGHT;
         RailChunkType type = railInfo.getType();
         BuildingPart part;
         Transform transform = Transform.ROTATE_NONE;
@@ -1669,34 +1686,34 @@ public class LostCityTerrainFeature {
                 return;
             case STATION_SURFACE:
             case STATION_EXTENSION_SURFACE:
-                if (railInfo.getLevel() < info.cityLevel) {
+                if (railInfo.getWorld() < info.cityLevel) {
                     // Even for a surface station extension we switch to underground if we are an extension
                     // that is at a spot where the city is higher then where the station is
-                    part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationUnderground()));
+                    part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationUnderground()));
                 } else {
                     if (railInfo.getPart() != null) {
-                        part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railInfo.getPart()));
+                        part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railInfo.getPart()));
                     } else {
-                        part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationOpen()));
+                        part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationOpen()));
                     }
                 }
                 clearUpper = true;
                 break;
             case STATION_UNDERGROUND:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationUndergroundStairs()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationUndergroundStairs()));
                 needsStaircase = true;
                 break;
             case STATION_EXTENSION_UNDERGROUND:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationUnderground()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationUnderground()));
                 break;
             case RAILS_END_HERE:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsHorizontalEnd()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsHorizontalEnd()));
                 if (railInfo.getDirection() == Railway.RailDirection.EAST) {
                     transform = Transform.MIRROR_X;
                 }
                 break;
             case HORIZONTAL:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsHorizontal()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsHorizontal()));
 
                 // If the adjacent chunks are also horizontal we take a sample of the blocks around us to see if we are in water
                 RailChunkType type1 = info.getXmin().getRailInfo().getType();
@@ -1708,51 +1725,51 @@ public class LostCityTerrainFeature {
                             driver.getBlock(12, height + 2, 12) == liquid &&
                             driver.getBlock(3, height + 4, 7) == liquid &&
                             driver.getBlock(12, height + 4, 8) == liquid) {
-                        part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsHorizontalWater()));
+                        part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsHorizontalWater()));
                     }
                 }
                 break;
             case VERTICAL:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsVertical()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsVertical()));
                 if (driver.getBlock(3, height + 2, 3) == liquid &&
                         driver.getBlock(12, height + 2, 3) == liquid &&
                         driver.getBlock(3, height + 2, 12) == liquid &&
                         driver.getBlock(12, height + 2, 12) == liquid &&
                         driver.getBlock(3, height + 4, 7) == liquid &&
                         driver.getBlock(12, height + 4, 8) == liquid) {
-                    part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsVerticalWater()));
+                    part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsVerticalWater()));
                 }
                 if (railInfo.getDirection() == Railway.RailDirection.EAST) {
                     transform = Transform.MIRROR_X;
                 }
                 break;
             case THREE_SPLIT:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.rails3Split()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.rails3Split()));
                 if (railInfo.getDirection() == Railway.RailDirection.EAST) {
                     transform = Transform.MIRROR_X;
                 }
                 break;
             case GOING_DOWN_TWO_FROM_SURFACE:
             case GOING_DOWN_FURTHER:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsDown2()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsDown2()));
                 if (railInfo.getDirection() == Railway.RailDirection.EAST) {
                     transform = Transform.MIRROR_X;
                 }
                 break;
             case GOING_DOWN_ONE_FROM_SURFACE:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsDown1()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsDown1()));
                 if (railInfo.getDirection() == Railway.RailDirection.EAST) {
                     transform = Transform.MIRROR_X;
                 }
                 break;
             case DOUBLE_BEND:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsBend()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsBend()));
                 if (railInfo.getDirection() == Railway.RailDirection.EAST) {
                     transform = Transform.MIRROR_X;
                 }
                 break;
             default:
-                part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsFlat()));
+                part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.railsFlat()));
                 break;
         }
         int h = generatePart(info, part, transform, 0, height, 0, HardAirSetting.AIR);
@@ -1866,13 +1883,13 @@ public class LostCityTerrainFeature {
         }
 
         if (needsStaircase) {
-            part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationStaircase()));
-            for (int i = railInfo.getLevel() + 1; i < info.cityLevel; i++) {
+            part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationStaircase()));
+            for (int i = railInfo.getWorld() + 1; i < info.cityLevel; i++) {
                 height = info.groundLevel + i * FLOORHEIGHT;
                 generatePart(info, part, transform, 0, height, 0, HardAirSetting.AIR);
             }
             height = info.groundLevel + info.cityLevel * FLOORHEIGHT;
-            part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationStaircaseSurface()));
+            part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(railwayParts.stationStaircaseSurface()));
             generatePart(info, part, transform, 0, height, 0, HardAirSetting.AIR);
         }
     }
@@ -2046,7 +2063,7 @@ public class LostCityTerrainFeature {
 
         CompiledPalette palette = info.getCompiledPalette();
 
-        BlockState ironbarsState = Blocks.IRON_BARS.defaultBlockState();
+        BlockState ironbarsState = Blocks.IRON_BARS.getDefaultState();
         Character infobarsChar = info.getCityStyle().getIronbarsBlock();
         Supplier<BlockState> ironbars = infobarsChar == null ? () -> ironbarsState : () -> palette.get(infobarsChar);
         Set<BlockState> infoBarSet = infobarsChar == null ? Collections.singleton(ironbarsState) : palette.getAll(infobarsChar);
@@ -2108,7 +2125,7 @@ public class LostCityTerrainFeature {
         Railway.RailChunkInfo railInfo = info.getRailInfo();
         boolean canDoParks = info.getHighwayXLevel() != info.cityLevel && info.getHighwayZLevel() != info.cityLevel
                 && railInfo.getType() != RailChunkType.STATION_SURFACE
-                && (railInfo.getType() != RailChunkType.STATION_EXTENSION_SURFACE || railInfo.getLevel() < info.cityLevel);
+                && (railInfo.getType() != RailChunkType.STATION_EXTENSION_SURFACE || railInfo.getWorld() < info.cityLevel);
 
         if (canDoParks) {
             int height = info.getCityGroundLevel();
@@ -2330,8 +2347,8 @@ public class LostCityTerrainFeature {
     }
 
     private void generateCorridors(BuildingInfo info, boolean xRail, boolean zRail) {
-        BlockState railx = Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, RailShape.EAST_WEST);
-        BlockState railz = Blocks.RAIL.defaultBlockState();
+        BlockState railx = Blocks.RAIL.getDefaultState().with(RailBlock.SHAPE, RailShape.EAST_WEST);
+        BlockState railz = Blocks.RAIL.getDefaultState();
 
         Character corridorRoofBlock = info.getCityStyle().getCorridorRoofBlock();
         Character corridorGlassBlock = info.getCityStyle().getCorridorGlassBlock();
@@ -2355,9 +2372,9 @@ public class LostCityTerrainFeature {
                         driver.add(palette.get(corridorGlassBlock));
                         BlockPos pos = driver.getCurrentCopy();
                         Character glowstoneChar = info.getCityStyle().getGlowstoneBlock();
-                        BlockState glowstone = glowstoneChar == null ? Blocks.GLOWSTONE.defaultBlockState() : palette.get(glowstoneChar);
+                        BlockState glowstone = glowstoneChar == null ? Blocks.GLOWSTONE.getDefaultState() : palette.get(glowstoneChar);
                         driver.add(glowstone);
-                        updateNeeded(info, pos, Block.UPDATE_CLIENTS);
+                        updateNeeded(info, pos, Block.NOTIFY_LISTENERS);
                     } else {
                         BlockState roof = palette.get(corridorRoofBlock);
                         driver.add(roof).add(roof);
@@ -2369,7 +2386,7 @@ public class LostCityTerrainFeature {
         }
     }
 
-    private static final Random VEGETATION_RAND = new Random();
+    private static final java.util.Random VEGETATION_RAND = new java.util.Random();
 
     private void generateRandomVegetation(BuildingInfo info, int height) {
         VEGETATION_RAND.setSeed(provider.getSeed() * 377 + info.chunkZ * 341873128712L + info.chunkX * 132897987541L);
@@ -2461,7 +2478,7 @@ public class LostCityTerrainFeature {
         CompiledPalette compiledPalette = info.getCompiledPalette();
 
         Character grassChar = info.getCityStyle().getGrassBlock();
-        BlockState grassBlock = Blocks.GRASS_BLOCK.defaultBlockState();
+        BlockState grassBlock = Blocks.GRASS_BLOCK.getDefaultState();
         Supplier<BlockState> grass = (grassChar == null) ? () -> grassBlock : () -> compiledPalette.get(grassChar);
 
         for (int x = 0; x < 16; ++x) {
@@ -2518,7 +2535,7 @@ public class LostCityTerrainFeature {
 
     private void generateFullStreetSection(BuildingInfo info, int height) {
         StreetParts parts = info.getCityStyle().getStreetParts();
-        BuildingPart part = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.full()));
+        BuildingPart part = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.full()));
         generatePart(info, part, Transform.ROTATE_NONE, 0, height, 0, HardAirSetting.VOID);
     }
 
@@ -2531,9 +2548,9 @@ public class LostCityTerrainFeature {
         int cnt = (xmin ? 1 : 0) + (xmax ? 1 : 0) + (zmin ? 1 : 0) + (zmax ? 1 : 0);
         Transform transform = Transform.ROTATE_NONE;
         BuildingPart part = switch (cnt) {
-            case 0 -> AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.none()));
+            case 0 -> AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.none()));
             case 1 -> {
-                BuildingPart p = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.end()));
+                BuildingPart p = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.end()));
                 if (xmin) {
                 } else if (xmax) {
                     transform = Transform.ROTATE_180;
@@ -2546,7 +2563,7 @@ public class LostCityTerrainFeature {
             }
             case 2 -> {
                 if (xmin == xmax || zmin == zmax) {
-                    BuildingPart p = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.straight()));
+                    BuildingPart p = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.straight()));
                     if (xmin) {
                     } else if (xmax) {
                         transform = Transform.ROTATE_180;
@@ -2557,7 +2574,7 @@ public class LostCityTerrainFeature {
                     }
                     yield p;
                 } else {
-                    BuildingPart p = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.bend()));
+                    BuildingPart p = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.bend()));
                     if (xmin && zmin) {
                     } else if (xmin && zmax) {
                         transform = Transform.ROTATE_270;
@@ -2570,7 +2587,7 @@ public class LostCityTerrainFeature {
                 }
             }
             case 3 -> {
-                BuildingPart p = AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.t()));
+                BuildingPart p = AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.t()));
                 if (!xmin) {
                     transform = Transform.ROTATE_90;
                 } else if (!xmax) {
@@ -2580,7 +2597,7 @@ public class LostCityTerrainFeature {
                 }
                 yield p;
             }
-            case 4 -> AssetRegistries.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.all()));
+            case 4 -> AssetRegistryKeys.PARTS.getOrThrow(provider.getWorld(), getRandomPart(parts.all()));
             default -> throw new RuntimeException("Not possible!");
         };
         generatePart(info, part, transform, 0, height, 0, HardAirSetting.VOID);
@@ -2692,12 +2709,12 @@ public class LostCityTerrainFeature {
                                 BlockPos p = driver.getCurrentCopy();
                                 info.addPostTodo(p, () -> {
                                     if (provider.getWorld().getBlockState(p).getBlock() == Blocks.DIRT) {
-                                        provider.getWorld().setBlock(p, finalB, Block.UPDATE_NONE);
+                                        provider.getWorld().setBlockState(p, finalB, Block.NO_REDRAW);
                                     }
                                 });
-                                b = Blocks.DIRT.defaultBlockState();
+                                b = Blocks.DIRT.getDefaultState();
                             } else if (getStatesNeedingLightingUpdate().contains(b)) {
-                                updateNeeded(info, driver.getCurrentCopy(), Block.UPDATE_CLIENTS);
+                                updateNeeded(info, driver.getCurrentCopy(), Block.NOTIFY_LISTENERS);
                             } else if (getStatesNeedingTodo().contains(b)) {
                                 b = handleTodo(info, oy, provider.getWorld(), rx, rz, y, b);
                             }
@@ -2724,8 +2741,8 @@ public class LostCityTerrainFeature {
 
     private BlockEntityType getTypeForBlock(BlockState state) {
         return typeCache.computeIfAbsent(state.getBlock(), block -> {
-            for (BlockEntityType<?> type : ForgeRegistries.BLOCK_ENTITY_TYPES.getValues()) {
-                if (type.isValid(state)) {
+            for (BlockEntityType<?> type : ForgeRegistryKeys.BLOCK_ENTITY_TYPES.getValues()) {
+                if (type.supports(state)) {
                     return type;
                 }
             }
@@ -2733,64 +2750,64 @@ public class LostCityTerrainFeature {
         });
     }
 
-    private BlockState handleBlockEntity(BuildingInfo info, int oy, WorldGenLevel world, int rx, int rz, int y, BlockState b, Palette.Info inf) {
+    private BlockState handleBlockEntity(BuildingInfo info, int oy, StructureWorldAccess world, int rx, int rz, int y, BlockState b, Palette.Info inf) {
         BlockPos pos = new BlockPos(info.chunkX * 16 + rx, oy + y, info.chunkZ * 16 + rz);
         BlockEntityType type = getTypeForBlock(b);
         if (type == null) {
             ModSetup.getLogger().warn("Error getting type for block: " + b.getBlock());
             return b;
         }
-        CompoundTag tag = inf.tag().copy();
+        NbtCompound tag = inf.tag().copy();
         tag.putInt("x", pos.getX());
         tag.putInt("y", pos.getY());
         tag.putInt("z", pos.getZ());
-        tag.putString("id", ForgeRegistries.BLOCK_ENTITY_TYPES.getKey(type).toString());
-        world.getChunk(pos).setBlockEntityNbt(tag);
+        tag.putString("id", ForgeRegistryKeys.BLOCK_ENTITY_TYPES.getKey(type).toString());
+        world.getChunk(pos).addPendingBlockEntityNbt(tag);
         if (b.getBlock() == Blocks.COMMAND_BLOCK) {
             info.addPostTodo(pos, () -> {
-                ((ServerChunkCache)world.getChunkSource()).blockChanged(pos);
-                world.scheduleTick(pos, b.getBlock(), 1);
+                ((ServerChunkManager)world.getChunkManager()).markForUpdate(pos);
+                world.scheduleBlockTick(pos, b.getBlock(), 1);
             });
         }
         return b;
     }
 
-    private BlockState handleSpawner(BuildingInfo info, IBuildingPart part, int oy, WorldGenLevel world, int rx, int rz, int y, BlockState b, Palette.Info inf) {
+    private BlockState handleSpawner(BuildingInfo info, IBuildingPart part, int oy, StructureWorldAccess world, int rx, int rz, int y, BlockState b, Palette.Info inf) {
         if (info.profile.GENERATE_SPAWNERS && !info.noLoot) {
             String mobid = inf.mobId();
             BlockPos pos = new BlockPos(info.chunkX * 16 + rx, oy + y, info.chunkZ * 16 + rz);
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             tag.putInt("x", pos.getX());
             tag.putInt("y", pos.getY());
             tag.putInt("z", pos.getZ());
             tag.putString("id", "minecraft:mob_spawner");
-            ResourceLocation randomValue = getRandomSpawnerMob(world.getLevel(), rand, provider, info,
+            Identifier randomValue = getRandomSpawnerMob(world.toServerWorld(), rand, provider, info,
                     new BuildingInfo.ConditionTodo(mobid, part.getName(), info), pos);
-            CompoundTag sd = new CompoundTag();
+            NbtCompound sd = new NbtCompound();
             sd.putString("id", randomValue.toString());
-            SpawnData data = new SpawnData(sd, Optional.empty());
-            tag.put("SpawnData", SpawnData.CODEC.encodeStart(NbtOps.INSTANCE, data).result().orElseThrow(() -> new IllegalStateException("Invalid SpawnData")));
+            MobSpawnerEntry data = new MobSpawnerEntry(sd, Optional.empty());
+            tag.put("SpawnData", MobSpawnerEntry.CODEC.encodeStart(NbtOps.INSTANCE, data).result().orElseThrow(() -> new IllegalStateException("Invalid SpawnData")));
 
-            world.getChunk(pos).setBlockEntityNbt(tag);
+            world.getChunk(pos).addPendingBlockEntityNbt(tag);
         } else {
             b = air;
         }
         return b;
     }
 
-    private void handleLoot(BuildingInfo info, IBuildingPart part, WorldGenLevel world, BlockState b, Palette.Info inf) {
+    private void handleLoot(BuildingInfo info, IBuildingPart part, StructureWorldAccess world, BlockState b, Palette.Info inf) {
         if (!info.noLoot) {
             BlockPos pos = driver.getCurrentCopy();
             info.addPostTodo(pos, () -> {
                 if (!world.getBlockState(pos).isAir()) {
-                    world.setBlock(pos, b, Block.UPDATE_CLIENTS);
+                    world.setBlockState(pos, b, Block.NOTIFY_LISTENERS);
                     generateLoot(info, world, pos, new BuildingInfo.ConditionTodo(inf.loot(), part.getName(), info));
                 }
             });
         }
     }
 
-    private BlockState handleTodo(BuildingInfo info, int oy, WorldGenLevel world, int rx, int rz, int y, BlockState b) {
+    private BlockState handleTodo(BuildingInfo info, int oy, StructureWorldAccess world, int rx, int rz, int y, BlockState b) {
         Block block = b.getBlock();
         if (block instanceof SaplingBlock || block instanceof FlowerBlock) {
             if (info.profile.AVOID_FOLIAGE) {
@@ -2800,18 +2817,18 @@ public class LostCityTerrainFeature {
                 if (block instanceof SaplingBlock saplingBlock) {
                     BlockState finalB = b;
                     if (Config.FORCE_SAPLING_GROWTH.get()) {
-                        RandomSource forkedRand = rand.fork();
-                        GlobalTodo.get(world.getLevel()).addTodo(pos, (level) -> {
-                            if (level.isAreaLoaded(pos, 1) && level.getBlockState(pos).getBlock() instanceof SaplingBlock) {
-                                level.setBlock(pos, finalB, Block.UPDATE_CLIENTS);
-                                // We do rand.fork() to avoid accessing LegacyRandomSource from multiple threads
-                                saplingBlock.advanceTree(level, pos, finalB, forkedRand);
+                        Random forkedRand = rand.split();
+                        GlobalTodo.get(world.toServerWorld()).addTodo(pos, (level) -> {
+                            if (level.isChunkLoaded(pos, 1) && level.getBlockState(pos).getBlock() instanceof SaplingBlock) {
+                                level.setBlockState(pos, finalB, Block.NOTIFY_LISTENERS);
+                                // We do rand.split() to avoid accessing CheckedRandom from multiple threads
+                                saplingBlock.generate(level, pos, finalB, forkedRand);
                             }
                         });
                     } else {
                         info.addPostTodo(pos, () -> {
-                            BlockState state = finalB.setValue(SaplingBlock.STAGE, 1);
-                            world.setBlock(pos, state, Block.UPDATE_ALL_IMMEDIATE);
+                            BlockState state = finalB.with(SaplingBlock.STAGE, 1);
+                            world.setBlockState(pos, state, Block.NOTIFY_ALL_AND_REDRAW);
                         });
                     }
                 }
@@ -2832,16 +2849,16 @@ public class LostCityTerrainFeature {
             } else {
                 throw new RuntimeException("Error with rail!");
             }
-            RailShape shape = b.getValue(shapeProperty);
-            b = b.setValue(shapeProperty, transform.transform(shape));
+            RailShape shape = b.get(shapeProperty);
+            b = b.with(shapeProperty, transform.transform(shape));
         }
         return b;
     }
 
 
-    public static ResourceLocation getRandomSpawnerMob(Level world, RandomSource random, IDimensionInfo diminfo, BuildingInfo info, BuildingInfo.ConditionTodo todo, BlockPos pos) {
+    public static Identifier getRandomSpawnerMob(World world, Random random, IDimensionInfo diminfo, BuildingInfo info, BuildingInfo.ConditionTodo todo, BlockPos pos) {
         String condition = todo.getCondition();
-        Condition cnd = AssetRegistries.CONDITIONS.getOrThrow(world, condition);
+        Condition cnd = AssetRegistryKeys.CONDITIONS.getOrThrow(world, condition);
         int level = (pos.getY() - diminfo.getProfile().GROUNDLEVEL) / FLOORHEIGHT;
         int floor = (pos.getY() - info.getCityGroundLevel()) / FLOORHEIGHT;
         ConditionContext conditionContext = new ConditionContext(level, floor, info.cellars, info.getNumFloors(),
@@ -2852,21 +2869,21 @@ public class LostCityTerrainFeature {
             }
 
             @Override
-            public ResourceLocation getBiome() {
-                return world.getBiome(pos).unwrap().map(ResourceKey::location, biome -> world.registryAccess().registryOrThrow(Registries.BIOME).getKey(biome));
+            public Identifier getBiome() {
+                return world.getBiome(pos).getKey().map(RegistryKey::getRegistry, biome -> world.registryAccess().get(RegistryKeys.BIOME).getKey(biome));
             }
         };
         String randomValue = cnd.getRandomValue(random, conditionContext);
         if (randomValue == null) {
             throw new RuntimeException("Condition '" + cnd.getName() + "' did not return a valid mob!");
         }
-        return new ResourceLocation(randomValue);
+        return Identifier.of(randomValue);
     }
 
 
-    private void generateLoot(BuildingInfo info, LevelAccessor world, BlockPos pos, BuildingInfo.ConditionTodo condition) {
+    private void generateLoot(BuildingInfo info, WorldAccess world, BlockPos pos, BuildingInfo.ConditionTodo condition) {
         BlockEntity te = world.getBlockEntity(pos);
-        if (te instanceof RandomizableContainerBlockEntity) {
+        if (te instanceof LootableContainerBlockEntity) {
             if (this.provider.getProfile().GENERATE_LOOT) {
                 createLoot(info, rand, world, pos, condition, this.provider);
             }
@@ -2875,12 +2892,12 @@ public class LostCityTerrainFeature {
         }
     }
 
-    public static void createLoot(BuildingInfo info, RandomSource random, LevelAccessor world, BlockPos pos, BuildingInfo.ConditionTodo todo, IDimensionInfo diminfo) {
+    public static void createLoot(BuildingInfo info, Random random, WorldAccess world, BlockPos pos, BuildingInfo.ConditionTodo todo, IDimensionInfo diminfo) {
         if (random.nextFloat() < diminfo.getProfile().CHEST_WITHOUT_LOOT_CHANCE) {
             return;
         }
         BlockEntity tileentity = world.getBlockEntity(pos);
-        if (tileentity instanceof RandomizableContainerBlockEntity) {
+        if (tileentity instanceof LootableContainerBlockEntity) {
             if (todo != null) {
                 String lootTable = todo.getCondition();
                 int level = (pos.getY() - diminfo.getProfile().GROUNDLEVEL) / FLOORHEIGHT;
@@ -2893,17 +2910,18 @@ public class LostCityTerrainFeature {
                     }
 
                     @Override
-                    public ResourceLocation getBiome() {
-                        return world.getBiome(pos).unwrap().map(ResourceKey::location, biome -> world.registryAccess().registryOrThrow(Registries.BIOME).getKey(biome));
+                    public Identifier getBiome() {
+                        return world.getBiome(pos).getKey().map(RegistryKey::getRegistryRef, biome -> world.registryAccess().get(RegistryKeys.BIOME).getKey(biome));
+                
                     }
                 };
-                String randomValue = AssetRegistries.CONDITIONS.getOrThrow(world, lootTable).getRandomValue(random, conditionContext);
-//                ((LockableLootTileEntity) tileentity).setLootTable(new ResourceLocation(randomValue), random.nextLong());
+                String randomValue = AssetRegistryKeys.CONDITIONS.getOrThrow(world, lootTable).getRandomValue(random, conditionContext);
+//                ((LockableLootTileEntity) tileentity).setLootTable(Identifier.of(randomValue), random.nextLong());
 //                tileentity.markDirty();
 //                if (LostCityConfiguration.DEBUG) {
 //                    LostCities.setup.getLogger().debug("createLootChest: loot=" + randomValue + " pos=" + pos.toString());
 //                }
-                RandomizableContainerBlockEntity.setLootTable(world, random, pos, new ResourceLocation(randomValue));
+                LootableContainerBlockEntity.setLootTable(world, random, pos, Identifier.of(randomValue));
             }
         }
     }
@@ -2941,7 +2959,7 @@ public class LostCityTerrainFeature {
                 }
 
                 CompiledPalette palette = info.getCompiledPalette();
-                BlockState ironbarsState = Blocks.IRON_BARS.defaultBlockState();
+                BlockState ironbarsState = Blocks.IRON_BARS.getDefaultState();
                 Character infobarsChar = info.getCityStyle().getIronbarsBlock();
                 Supplier<BlockState> ironbars = infobarsChar == null ? () -> ironbarsState : () -> palette.get(infobarsChar);
 
@@ -3199,11 +3217,11 @@ public class LostCityTerrainFeature {
         }
     }
 
-    private BlockState getDoor(Block door, boolean upper, boolean left, net.minecraft.core.Direction facing) {
-        return door.defaultBlockState()
-                .setValue(DoorBlock.HALF, upper ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER)
-                .setValue(DoorBlock.HINGE, left ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT)
-                .setValue(DoorBlock.FACING, facing);
+    private BlockState getDoor(Block door, boolean upper, boolean left, net.minecraft.util.math.Direction facing) {
+        return door.getDefaultState()
+                .with(DoorBlock.HALF, upper ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER)
+                .with(DoorBlock.HINGE, left ? DoorHinge.LEFT : DoorHinge.RIGHT)
+                .with(DoorBlock.FACING, facing);
     }
 
     private void generateDoors(BuildingInfo info, int height, int f) {
@@ -3227,13 +3245,13 @@ public class LostCityTerrainFeature {
 
                 driver.current(x, height, 7)
                         .add(filler)
-                        .add(getDoor(info.doorBlock, false, true, net.minecraft.core.Direction.EAST))
-                        .add(getDoor(info.doorBlock, true, true, net.minecraft.core.Direction.EAST))
+                        .add(getDoor(info.doorBlock, false, true, net.minecraft.util.math.Direction.EAST))
+                        .add(getDoor(info.doorBlock, true, true, net.minecraft.util.math.Direction.EAST))
                         .add(filler);
                 driver.current(x, height, 8)
                         .add(filler)
-                        .add(getDoor(info.doorBlock, false, false, net.minecraft.core.Direction.EAST))
-                        .add(getDoor(info.doorBlock, true, false, net.minecraft.core.Direction.EAST))
+                        .add(getDoor(info.doorBlock, false, false, net.minecraft.util.math.Direction.EAST))
+                        .add(getDoor(info.doorBlock, true, false, net.minecraft.util.math.Direction.EAST))
                         .add(filler);
             }
         }
@@ -3249,13 +3267,13 @@ public class LostCityTerrainFeature {
             driver.setBlockRange(x, height, 9, height + 4, filler);
             driver.current(x, height, 7)
                     .add(filler)
-                    .add(getDoor(info.doorBlock, false, false, net.minecraft.core.Direction.WEST))
-                    .add(getDoor(info.doorBlock, true, false, net.minecraft.core.Direction.WEST))
+                    .add(getDoor(info.doorBlock, false, false, net.minecraft.util.math.Direction.WEST))
+                    .add(getDoor(info.doorBlock, true, false, net.minecraft.util.math.Direction.WEST))
                     .add(filler);
             driver.current(x, height, 8)
                     .add(filler)
-                    .add(getDoor(info.doorBlock, false, true, net.minecraft.core.Direction.WEST))
-                    .add(getDoor(info.doorBlock, true, true, net.minecraft.core.Direction.WEST))
+                    .add(getDoor(info.doorBlock, false, true, net.minecraft.util.math.Direction.WEST))
+                    .add(getDoor(info.doorBlock, true, true, net.minecraft.util.math.Direction.WEST))
                     .add(filler);
         }
         if (info.hasConnectionAtZ(f + info.cellars)) {
@@ -3270,13 +3288,13 @@ public class LostCityTerrainFeature {
                 driver.setBlockRange(9, height, z, height + 4, filler);
                 driver.current(7, height, z)
                         .add(filler)
-                        .add(getDoor(info.doorBlock, false, true, net.minecraft.core.Direction.NORTH))
-                        .add(getDoor(info.doorBlock, true, true, net.minecraft.core.Direction.NORTH))
+                        .add(getDoor(info.doorBlock, false, true, net.minecraft.util.math.Direction.NORTH))
+                        .add(getDoor(info.doorBlock, true, true, net.minecraft.util.math.Direction.NORTH))
                         .add(filler);
                 driver.current(8, height, z)
                         .add(filler)
-                        .add(getDoor(info.doorBlock, false, false, net.minecraft.core.Direction.NORTH))
-                        .add(getDoor(info.doorBlock, true, false, net.minecraft.core.Direction.NORTH))
+                        .add(getDoor(info.doorBlock, false, false, net.minecraft.util.math.Direction.NORTH))
+                        .add(getDoor(info.doorBlock, true, false, net.minecraft.util.math.Direction.NORTH))
                         .add(filler);
             }
         }
@@ -3292,13 +3310,13 @@ public class LostCityTerrainFeature {
             driver.setBlockRange(9, height, z, height + 4, filler);
             driver.current(7, height, z)
                     .add(filler)
-                    .add(getDoor(info.doorBlock, false, false, net.minecraft.core.Direction.SOUTH))
-                    .add(getDoor(info.doorBlock, true, false, net.minecraft.core.Direction.SOUTH))
+                    .add(getDoor(info.doorBlock, false, false, net.minecraft.util.math.Direction.SOUTH))
+                    .add(getDoor(info.doorBlock, true, false, net.minecraft.util.math.Direction.SOUTH))
                     .add(filler);
             driver.current(8, height, z)
                     .add(filler)
-                    .add(getDoor(info.doorBlock, false, true, net.minecraft.core.Direction.SOUTH))
-                    .add(getDoor(info.doorBlock, true, true, net.minecraft.core.Direction.SOUTH))
+                    .add(getDoor(info.doorBlock, false, true, net.minecraft.util.math.Direction.SOUTH))
+                    .add(getDoor(info.doorBlock, true, true, net.minecraft.util.math.Direction.SOUTH))
                     .add(filler);
         }
     }
@@ -3369,11 +3387,11 @@ public class LostCityTerrainFeature {
 
     private void updateNeeded(BuildingInfo info, BlockPos pos, int flags) {
         info.addPostTodo(pos, () -> {
-            WorldGenLevel world = provider.getWorld();
+            StructureWorldAccess world = provider.getWorld();
             BlockState state = world.getBlockState(pos);
             if (!state.isAir()) {
-                world.setBlock(pos, air, flags);
-                world.setBlock(pos, state, flags);
+                world.setBlockState(pos, air, flags);
+                world.setBlockState(pos, state, flags);
             }
         });
     }

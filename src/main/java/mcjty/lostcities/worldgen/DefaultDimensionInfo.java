@@ -2,55 +2,54 @@ package mcjty.lostcities.worldgen;
 
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.varia.ChunkCoord;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import mcjty.lostcities.worldgen.lost.cityassets.WorldStyle;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.biome.Climate;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ChunkSource;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.server.world.ServerChunkManager;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.util.math.random.CheckedRandom;
+import net.minecraft.world.World;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeSource;
+import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.biome.source.util.MultiNoiseUtil;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.chunk.ChunkManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Random;
+//import java.util.Random;
 
 public class DefaultDimensionInfo implements IDimensionInfo {
 
-    private WorldGenLevel world;
+    private StructureWorldAccess world;
     private final LostCityProfile profile;
     private final LostCityProfile profileOutside;
     private final WorldStyle style;
 
-    private final Random random;
+    private final java.util.Random random;
 
     private final Registry<Biome> biomeRegistry;
     private final LostCityTerrainFeature feature;
 
-    public DefaultDimensionInfo(WorldGenLevel world, LostCityProfile profile, LostCityProfile profileOutside) {
+    public DefaultDimensionInfo(StructureWorldAccess world, LostCityProfile profile, LostCityProfile profileOutside) {
         this.world = world;
         this.profile = profile;
         this.profileOutside = profileOutside;
-        style = AssetRegistries.WORLDSTYLES.get(world, profile.getWorldStyle());
-        random = new Random(world.getSeed());
-        RandomSource randomSource = new LegacyRandomSource(world.getSeed());
-        feature = new LostCityTerrainFeature(this, profile, randomSource);
+        style = AssetRegistryKeys.WORLDSTYLES.get(world, profile.getWorldStyle());
+        random = new java.util.Random(world.getSeed());
+        Random Random = new CheckedRandom(world.getSeed());
+        feature = new LostCityTerrainFeature(this, profile, Random);
         feature.setupStates(profile);
-        biomeRegistry = world.registryAccess().registryOrThrow(Registries.BIOME);
+        biomeRegistry = world.getRegistryManager().get(RegistryKeys.BIOME);
     }
 
     @Override
-    public void setWorld(WorldGenLevel world) {
+    public void setWorld(StructureWorldAccess world) {
         this.world = world;
     }
 
@@ -60,13 +59,13 @@ public class DefaultDimensionInfo implements IDimensionInfo {
     }
 
     @Override
-    public WorldGenLevel getWorld() {
+    public StructureWorldAccess getWorld() {
         return world;
     }
 
     @Override
-    public ResourceKey<Level> getType() {
-        return world.getLevel().dimension();
+    public RegistryKey<World> getType() {
+        return world.toServerWorld().getRegistryKey();
     }
 
     @Override
@@ -85,7 +84,7 @@ public class DefaultDimensionInfo implements IDimensionInfo {
     }
 
     @Override
-    public Random getRandom() {
+    public java.util.Random getRandom() {
         return random;
     }
 
@@ -115,20 +114,20 @@ public class DefaultDimensionInfo implements IDimensionInfo {
 //    }
 //
     @Override
-    public Holder<Biome> getBiome(BlockPos pos) {
-        ChunkSource chunkProvider = getWorld().getChunkSource();
-        if (chunkProvider instanceof ServerChunkCache) {
-            ChunkGenerator generator = ((ServerChunkCache) chunkProvider).getGenerator();
+    public RegistryEntry<Biome> getBiome(BlockPos pos) {
+        ChunkManager chunkProvider = getWorld().getChunkManager();
+        if (chunkProvider instanceof ServerChunkManager) {
+            ChunkGenerator generator = ((ServerChunkManager) chunkProvider).getChunkGenerator();
             BiomeSource biomeProvider = generator.getBiomeSource();
-            Climate.Sampler sampler = ((ServerChunkCache) chunkProvider).randomState().sampler();
-            return biomeProvider.getNoiseBiome(pos.getX() >> 2, pos.getY() >> 2, pos.getZ() >> 2, sampler);
+            MultiNoiseUtil.MultiNoiseSampler sampler = ((ServerChunkManager) chunkProvider).getNoiseConfig().getMultiNoiseSampler();
+            return biomeProvider.getBiome(pos.getX() >> 2, pos.getY() >> 2, pos.getZ() >> 2, sampler);
         }
-        return biomeRegistry.getHolderOrThrow(Biomes.PLAINS);
+        return biomeRegistry.getEntry(BiomeKeys.PLAINS).orElseThrow();
     }
 
     @Nullable
     @Override
-    public ResourceKey<Level> dimension() {
-        return world.getLevel().dimension();
+    public RegistryKey<World> dimension() {
+        return world.toServerWorld().getRegistryKey();
     }
 }

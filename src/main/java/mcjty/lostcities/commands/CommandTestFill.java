@@ -6,36 +6,36 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.BlockState;
 
 import java.util.Random;
 
-public class CommandTestFill implements Command<CommandSourceStack> {
+public class CommandTestFill implements Command<ServerCommandSource> {
 
     private static final CommandTestFill CMD = new CommandTestFill();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("testfill")
-                .requires(cs -> cs.hasPermission(0))
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("testfill")
+                .requires(cs -> cs.hasPermissionLevel(0))
                 .executes(CMD);
     }
 
     private static final Random random = new Random();
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         // Fill a 3x3 area from the current position with stairs in a circular pattern. Do this for
         // several layers, each time with a different type of stair
-        ServerLevel world = context.getSource().getLevel();
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        BlockPos pos = player.blockPosition();
+        ServerWorld world = context.getSource().getWorld();
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        BlockPos pos = player.getBlockPos();
 
         Block[] blocks = new Block[] {
                 Blocks.SANDSTONE_STAIRS,
@@ -137,7 +137,7 @@ public class CommandTestFill implements Command<CommandSourceStack> {
                     ImmutableList<BlockState> states = block.getStateDefinition().getPossibleStates();
                     BlockState state = states.get(random.nextInt(states.size()));
 
-                    world.setBlock(p, state, Block.UPDATE_ALL);
+                    world.setBlockState(p, state, Block.UPDATE_ALL);
                 }
             }
         }

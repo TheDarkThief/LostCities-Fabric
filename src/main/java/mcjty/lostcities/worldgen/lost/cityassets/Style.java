@@ -5,7 +5,7 @@ import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.regassets.StyleRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
 import mcjty.lostcities.worldgen.lost.regassets.data.PaletteSelector;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.Random;
 
 public class Style implements ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
 
     private final List<List<Pair<Float, String>>> randomPaletteChoices = new ArrayList<>();
 
@@ -37,7 +37,7 @@ public class Style implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 
@@ -53,7 +53,7 @@ public class Style implements ILostCityAsset {
             for (Pair<Float, String> pair : pairs) {
                 r -= pair.getKey();
                 if (r <= 0) {
-                    tomerge = AssetRegistries.PALETTES.getOrThrow(provider.getWorld(), pair.getRight());
+                    tomerge = AssetRegistryKeys.PALETTES.getOrThrow(provider.getWorld(), pair.getRight());
                     break;
                 }
             }

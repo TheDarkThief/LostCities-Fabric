@@ -1,7 +1,7 @@
 package mcjty.lostcities.playerdata;
 
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 public class PlayerSpawnSet {
 
@@ -23,11 +23,11 @@ public class PlayerSpawnSet {
     }
 
 
-    public void saveNBTData(CompoundTag compound) {
+    public void saveNBTData(NbtCompound compound) {
         compound.putBoolean("spawnSet", playerSpawnSet);
     }
 
-    public void loadNBTData(CompoundTag compound) {
+    public void loadNBTData(NbtCompound compound) {
         playerSpawnSet = compound.getBoolean("spawnSet");
     }
 }

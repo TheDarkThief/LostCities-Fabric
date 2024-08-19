@@ -2,16 +2,16 @@ package mcjty.lostcities.gui.elements;
 
 import mcjty.lostcities.config.Configuration;
 import mcjty.lostcities.gui.GuiLCConfig;
-import mcjty.lostcities.varia.ComponentFactory;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
+import mcjty.lostcities.varia.TextFactory;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 
 public class IntElement extends GuiElement {
 
     private final GuiLCConfig gui;
     private String label = null;
     private String prefix = null;
-    private final EditBox field;
+    private final TextFieldWidget field;
     private final String attribute;
 
     public IntElement(GuiLCConfig gui, String page, int x, int y, String attribute) {
@@ -19,7 +19,7 @@ public class IntElement extends GuiElement {
         this.gui = gui;
         this.attribute = attribute;
         Integer c = gui.getLocalSetup().get().map(h -> (Integer) h.toConfiguration().get(attribute)).orElse(0);
-        field = new EditBox(gui.getFont(), x, y, 45, 16, ComponentFactory.literal(Integer.toString(c))) {
+        field = new TextFieldWidget(gui.getFont(), x, y, 45, 16, TextFactory.literal(Integer.toString(c))) {
             // @todo 1.19.3
 //            @Override
 //            public void renderToolTip(PoseStack stack, int x, int y) {
@@ -42,7 +42,7 @@ public class IntElement extends GuiElement {
                 val.set(value);
                 if (val.constrain()) {
                     // It was constraint to min/max. Restore the field
-                    setValue(val.get());
+                    with(val.get());
                 }
                 profile.copyFromConfiguration(configuration);
                 gui.refreshPreview();
@@ -67,13 +67,13 @@ public class IntElement extends GuiElement {
     }
 
     @Override
-    public void render(GuiGraphics graphics) {
+    public void render(DrawContext graphics) {
         if (field.visible) {
             if (label != null) {
-                graphics.drawString(gui.getFont(), label, 10, y + 5, 0xffffffff);
+                graphics.drawTextWithShadow(gui.getFont(), label, 10, y + 5, 0xffffffff);
             }
             if (prefix != null) {
-                graphics.drawString(gui.getFont(), prefix, x - 8, y + 5, 0xffffffff);
+                graphics.drawTextWithShadow(gui.getFont(), prefix, x - 8, y + 5, 0xffffffff);
             }
         }
     }
@@ -82,15 +82,15 @@ public class IntElement extends GuiElement {
     public void update() {
         gui.getLocalSetup().get().ifPresent(profile -> {
             Object result = profile.toConfiguration().get(attribute);
-            setValue(result);
+            with(result);
         });
     }
 
-    private void setValue(Object result) {
+    private void with(Object result) {
         if (result instanceof Float) {
-            field.setValue(Float.toString((Float)result));
+            field.with(Float.toString((Float)result));
         } else if (result instanceof Integer) {
-            field.setValue(Integer.toString((Integer)result));
+            field.with(Integer.toString((Integer)result));
         }
     }
 

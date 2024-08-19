@@ -3,7 +3,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.PartRef;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class BuildingRE implements IAsset<BuildingRE> {
             ).apply(instance, BuildingRE::new));
 
 
-    private ResourceLocation name;
+    private Identifier name;
 
     private int minFloors = -1;         // -1 means default from level
     private int minCellars = -1;        // -1 means default frmo level
@@ -67,13 +67,13 @@ public class BuildingRE implements IAsset<BuildingRE> {
     }
 
     @Override
-    public BuildingRE setRegistryName(ResourceLocation name) {
+    public BuildingRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 

@@ -5,9 +5,9 @@ import mcjty.lostcities.worldgen.lost.BuildingInfo;
 import mcjty.lostcities.worldgen.lost.regassets.BuildingPartRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
 import mcjty.lostcities.worldgen.lost.regassets.data.PartMeta;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.CommonLevelAccessor;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.RegistryWorldView;
+import net.minecraft.block.BlockState;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class BuildingPart implements IBuildingPart, ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
 
     // Data per height level
     private final String[] slices;
@@ -96,7 +96,7 @@ public class BuildingPart implements IBuildingPart, ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 
@@ -136,9 +136,9 @@ public class BuildingPart implements IBuildingPart, ILostCityAsset {
     }
 
     @Override
-    public Palette getLocalPalette(CommonLevelAccessor level) {
+    public Palette getLocalPalette(RegistryWorldView level) {
         if (localPalette == null && refPaletteName != null) {
-            localPalette = AssetRegistries.PALETTES.getOrThrow(level, refPaletteName);
+            localPalette = AssetRegistryKeys.PALETTES.getOrThrow(level, refPaletteName);
         }
         return localPalette;
     }

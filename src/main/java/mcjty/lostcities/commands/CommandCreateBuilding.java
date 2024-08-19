@@ -8,75 +8,75 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.ChunkCoord;
-import mcjty.lostcities.varia.ComponentFactory;
+import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
 import mcjty.lostcities.worldgen.lost.cityassets.*;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.command.argument.IdentifierArgumentType;
+import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.DefaultPosArgument;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Identifier;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.BlockState;
 
 import static mcjty.lostcities.worldgen.LostCityTerrainFeature.FLOORHEIGHT;
 
-public class CommandCreateBuilding implements Command<CommandSourceStack> {
+public class CommandCreateBuilding implements Command<ServerCommandSource> {
 
     private static final CommandCreateBuilding CMD = new CommandCreateBuilding();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("createbuilding")
-                .requires(cs -> cs.hasPermission(1))
-                .then(Commands.argument("name", ResourceLocationArgument.id())
-                        .suggests(ModCommands.getBuildingSuggestionProvider())
-                        .then(Commands.argument("floors", IntegerArgumentType.integer(1, 20))
-                                .then(Commands.argument("cellars", IntegerArgumentType.integer(0, 10))
-                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("createbuilding")
+                .requires(cs -> cs.hasPermissionLevel(1))
+                .then(CommandManager.argument("name", IdentifierArgumentType.identifier())
+                        .suggests(ModCommandManager.getBuildingSuggestionProvider())
+                        .then(CommandManager.argument("floors", IntegerArgumentType.integer(1, 20))
+                                .then(CommandManager.argument("cellars", IntegerArgumentType.integer(0, 10))
+                                        .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
                                                 .executes(CMD)))));
     }
 
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ResourceLocation name = context.getArgument("name", ResourceLocation.class);
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        Identifier name = context.getArgument("name", Identifier.class);
         Integer floors = context.getArgument("floors", Integer.class);
         Integer cellars = context.getArgument("cellars", Integer.class);
-        Building building = AssetRegistries.BUILDINGS.get(context.getSource().getLevel(), name);
+        Building building = AssetRegistryKeys.BUILDINGS.get(context.getSource().getWorld(), name);
         if (building == null) {
-            context.getSource().sendFailure(ComponentFactory.literal("Cannot find building: " + name + "!"));
+            context.getSource().sendError(TextFactory.literal("Cannot find building: " + name + "!"));
             return 0;
         }
 
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        ServerLevel level = (ServerLevel) player.level();
-        WorldCoordinates pos = context.getArgument("pos", WorldCoordinates.class);
-        BlockPos bottom = pos.getBlockPos(context.getSource());
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        ServerWorld level = (ServerWorld) player.getWorld();
+        DefaultPosArgument pos = context.getArgument("pos", DefaultPosArgument.class);
+        BlockPos bottom = pos.toAbsoluteBlockPos(context.getSource());
 
         IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo(level);
         if (dimInfo == null) {
-            context.getSource().sendFailure(ComponentFactory.literal("This dimension doesn't support Lost Cities!"));
+            context.getSource().sendError(TextFactory.literal("This dimension doesn't support Lost Cities!"));
             return 0;
         }
-        ChunkCoord coord = new ChunkCoord(level.dimension(), bottom.getX() >> 4, bottom.getZ() >> 4);
+        ChunkCoord coord = new ChunkCoord(level.getRegistryKey(), bottom.getX() >> 4, bottom.getZ() >> 4);
         BuildingInfo info = BuildingInfo.getBuildingInfo(coord, dimInfo);
         info.setBuildingType(building, cellars, floors, bottom.getY());
 
         ChunkPos cp = new ChunkPos(bottom);
 
         int height = bottom.getY();
-        for (int y = height ; y < level.getMaxBuildHeight() ; y++) {
+        for (int y = height ; y < level.getHeight() ; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    level.setBlock(cp.getBlockAt(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    level.setBlockState(cp.getBlockPos(x, y, z), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
                 }
             }
         }
@@ -96,7 +96,7 @@ public class CommandCreateBuilding implements Command<CommandSourceStack> {
         return 0;
     }
 
-    private static void generatePart(Level level, ChunkPos cp, BuildingInfo info, IBuildingPart part, int oy) {
+    private static void generatePart(World level, ChunkPos cp, BuildingInfo info, IBuildingPart part, int oy) {
         CompiledPalette compiledPalette = info.getCompiledPalette();
         // Cache the combined palette?
         Palette partPalette = part.getLocalPalette(level);
@@ -106,21 +106,21 @@ public class CommandCreateBuilding implements Command<CommandSourceStack> {
         }
 
         boolean nowater = part.getMetaBoolean("nowater");
-        BlockPos.MutableBlockPos current = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable current = new BlockPos.Mutable();
 
         for (int x = 0; x < part.getXSize(); x++) {
             for (int z = 0; z < part.getZSize(); z++) {
                 char[] vs = part.getVSlice(x, z);
                 if (vs != null) {
-                    int rx = cp.getBlockX(x);
-                    int rz = cp.getBlockZ(z);
+                    int rx = cp.getOffsetX(x);
+                    int rz = cp.getOffsetZ(z);
                     current.set(rx, oy, rz);
                     for (char c : vs) {
                         BlockState b = compiledPalette.get(c);
                         if (b == null) {
                             throw new RuntimeException("Could not find entry '" + c + "' in the palette for part '" + part.getName() + "'!");
                         }
-                        level.setBlock(current, b, Block.UPDATE_CLIENTS);
+                        level.setBlockState(current, b, Block.NOTIFY_LISTENERS);
                         current.setY(current.getY() + 1);
                     }
                 }

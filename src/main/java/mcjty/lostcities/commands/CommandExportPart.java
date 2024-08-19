@@ -12,25 +12,25 @@ import com.mojang.serialization.JsonOps;
 import mcjty.lostcities.editor.EditorInfo;
 import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.ChunkCoord;
-import mcjty.lostcities.varia.ComponentFactory;
+import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.varia.Tools;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
 import mcjty.lostcities.worldgen.lost.cityassets.CompiledPalette;
 import mcjty.lostcities.worldgen.lost.cityassets.Palette;
 import mcjty.lostcities.worldgen.lost.regassets.BuildingPartRE;
 import mcjty.lostcities.worldgen.lost.regassets.PaletteRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.PaletteEntry;
-import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Formatting;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.text.Text;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.block.BlockState;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -38,39 +38,39 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class CommandExportPart implements Command<CommandSourceStack> {
+public class CommandExportPart implements Command<ServerCommandSource> {
 
     private static final CommandExportPart CMD = new CommandExportPart();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("exportpart")
-                .requires(cs -> cs.hasPermission(1))
-                .then(Commands.argument("name", StringArgumentType.word()).executes(CMD));
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("exportpart")
+                .requires(cs -> cs.hasPermissionLevel(1))
+                .then(CommandManager.argument("name", StringArgumentType.word()).executes(CMD));
     }
 
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         String filename = context.getArgument("name", String.class);
-        ServerPlayer player = context.getSource().getPlayerOrException();
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
         EditorInfo editorInfo = EditorInfo.getEditorInfo(player.getUUID());
         if (editorInfo == null) {
-            context.getSource().sendFailure(Component.literal("You are not editing anything!").withStyle(ChatFormatting.RED));
+            context.getSource().sendError(Text.literal("You are not editing anything!").formatted(Formatting.RED));
             return 0;
         }
 
-        BuildingPart part = AssetRegistries.PARTS.get(context.getSource().getLevel(), editorInfo.getPartName());
+        BuildingPart part = AssetRegistryKeys.PARTS.get(context.getSource().getWorld(), editorInfo.getPartName());
         if (part == null) {
-            context.getSource().sendFailure(Component.literal("Error finding part '" + editorInfo.getPartName() + "'!").withStyle(ChatFormatting.RED));
+            context.getSource().sendError(Text.literal("Error finding part '" + editorInfo.getPartName() + "'!").formatted(Formatting.RED));
             return 0;
         }
 
         BlockPos start = editorInfo.getBottomLocation();
 
-        ServerLevel level = (ServerLevel) player.level();
+        ServerWorld level = (ServerWorld) player.getServerWorld();
         IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo(level);
         if (dimInfo == null) {
-            context.getSource().sendFailure(ComponentFactory.literal("This dimension doesn't support Lost Cities!"));
+            context.getSource().sendError(TextFactory.literal("This dimension doesn't support Lost Cities!"));
             return 0;
         }
 
@@ -159,9 +159,9 @@ public class CommandExportPart implements Command<CommandSourceStack> {
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename, StandardCharsets.UTF_8));
             writer.write(json);
             writer.close();
-            context.getSource().sendSuccess(() -> ComponentFactory.literal("Exported part to '" + filename + "'!"), false);
+            context.getSource().sendFeedback(() -> TextFactory.literal("Exported part to '" + filename + "'!"), false);
         } catch (IOException e) {
-            context.getSource().sendFailure(Component.literal("Error writing file '" + filename + "'!").withStyle(ChatFormatting.RED));
+            context.getSource().sendError(Text.literal("Error writing file '" + filename + "'!").formatted(Formatting.RED));
         }
 
         return 0;

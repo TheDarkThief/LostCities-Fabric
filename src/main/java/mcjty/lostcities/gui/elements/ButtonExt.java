@@ -1,18 +1,17 @@
 package mcjty.lostcities.gui.elements;
 
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.text.Text;
 
-public class ButtonExt extends Button {
+public class ButtonExt extends ButtonWidget {
 
-    public ButtonExt(int x, int y, int w, int h, Component message, OnPress action) {
-        super(x, y, w, h, message, action, supplier -> Component.empty());
+    public ButtonExt(int x, int y, int w, int h, Text message, PressAction action) {
+        super(x, y, w, h, message, action, supplier -> Text.empty());
     }
 
-    public ButtonExt tooltip(Component tooltip) {
-        setTooltip(Tooltip.create(tooltip));
+    public ButtonExt tooltip(Text tooltip) {
+        setTooltip(Tooltip.of(tooltip));
         return this;
     }
 }

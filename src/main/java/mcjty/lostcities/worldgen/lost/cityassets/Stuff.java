@@ -3,11 +3,11 @@ package mcjty.lostcities.worldgen.lost.cityassets;
 import mcjty.lostcities.api.ILostCityAsset;
 import mcjty.lostcities.worldgen.lost.regassets.StuffSettingsRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public class Stuff implements ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
     private final StuffSettingsRE settings;
 
     public Stuff(StuffSettingsRE settings) {
@@ -21,7 +21,7 @@ public class Stuff implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 

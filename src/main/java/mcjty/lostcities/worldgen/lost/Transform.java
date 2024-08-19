@@ -1,23 +1,25 @@
 package mcjty.lostcities.worldgen.lost;
 
-import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.block.enums.RailShape;
+import net.minecraft.util.BlockRotation;
+
 
 public enum Transform {
-    ROTATE_NONE(net.minecraft.world.level.block.Rotation.NONE),
-    ROTATE_90(net.minecraft.world.level.block.Rotation.CLOCKWISE_90),
-    ROTATE_180(net.minecraft.world.level.block.Rotation.CLOCKWISE_180),
-    ROTATE_270(net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90),
-    MIRROR_X(net.minecraft.world.level.block.Rotation.CLOCKWISE_180),
-    MIRROR_Z(net.minecraft.world.level.block.Rotation.CLOCKWISE_180),
-    MIRROR_90_X(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+    ROTATE_NONE(BlockRotation.NONE),
+    ROTATE_90(BlockRotation.CLOCKWISE_90),
+    ROTATE_180(BlockRotation.CLOCKWISE_180),
+    ROTATE_270(BlockRotation.COUNTERCLOCKWISE_90),
+    MIRROR_X(BlockRotation.CLOCKWISE_180),
+    MIRROR_Z(BlockRotation.CLOCKWISE_180),
+    MIRROR_90_X(BlockRotation.CLOCKWISE_90);
 
-    private final net.minecraft.world.level.block.Rotation mcRotation;
+    private final BlockRotation mcRotation;
 
-    Transform(net.minecraft.world.level.block.Rotation mcRotation) {
+    Transform(BlockRotation mcRotation) {
         this.mcRotation = mcRotation;
     }
 
-    public net.minecraft.world.level.block.Rotation getMcRotation() {
+    public BlockRotation getMcRotation() {
         return mcRotation;
     }
 

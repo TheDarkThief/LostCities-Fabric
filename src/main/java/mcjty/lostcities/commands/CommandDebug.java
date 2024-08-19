@@ -12,29 +12,29 @@ import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
 import mcjty.lostcities.worldgen.lost.CitySphere;
 import mcjty.lostcities.worldgen.lost.Railway;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.StructureWorldAccess;
 
-public class CommandDebug implements Command<CommandSourceStack> {
+public class CommandDebug implements Command<ServerCommandSource> {
 
     private static final CommandDebug CMD = new CommandDebug();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("debug")
-                .requires(cs -> cs.hasPermission(0))
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("debug")
+                .requires(cs -> cs.hasPermissionLevel(0))
                 .executes(CMD);
     }
 
 
     @SuppressWarnings("UseOfSystemOutOrSystemErr")
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        BlockPos position = player.blockPosition();
-        IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo((WorldGenLevel) player.level());
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        BlockPos position = player.getBlockPos();
+        IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo((StructureWorldAccess) player.getWorld());
         if (dimInfo != null) {
             ChunkCoord coord = new ChunkCoord(dimInfo.getType(), position.getX() >> 4, position.getZ() >> 4);
             BuildingInfo info = BuildingInfo.getBuildingInfo(coord, dimInfo);
@@ -61,7 +61,7 @@ public class CommandDebug implements Command<CommandSourceStack> {
 
             Railway.RailChunkInfo railInfo = Railway.getRailChunkType(info.coord, info.provider, info.profile);
             System.out.println("railInfo.getType() = " + railInfo.getType());
-            System.out.println("railInfo.getLevel() = " + railInfo.getLevel());
+            System.out.println("railInfo.getWorld() = " + railInfo.getWorld());
             System.out.println("railInfo.getDirection() = " + railInfo.getDirection());
             System.out.println("railInfo.getRails() = " + railInfo.getRails());
 
@@ -73,7 +73,7 @@ public class CommandDebug implements Command<CommandSourceStack> {
             int explosions = info.getExplosions().size();
             System.out.println("explosions = " + explosions);
 
-            ChunkHeightmap heightmap = dimInfo.getFeature().getHeightmap(info.coord, (WorldGenLevel) player.level());
+            ChunkHeightmap heightmap = dimInfo.getFeature().getHeightmap(info.coord, (StructureWorldAccess) player.getServerWorld());
             System.out.println("Chunk height (heightmap): " + heightmap.getHeight());
 
             System.out.println("dimInfo.getProfile().BUILDING_MINFLOORS = " + dimInfo.getProfile().BUILDING_MINFLOORS);

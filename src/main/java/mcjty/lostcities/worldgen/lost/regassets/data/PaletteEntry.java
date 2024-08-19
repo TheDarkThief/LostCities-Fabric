@@ -2,7 +2,7 @@ package mcjty.lostcities.worldgen.lost.regassets.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +23,7 @@ public class PaletteEntry {
                     Codec.STRING.optionalFieldOf("mob").forGetter(l -> Optional.ofNullable(l.getMob())),
                     Codec.STRING.optionalFieldOf("loot").forGetter(l -> Optional.ofNullable(l.getLoot())),
                     Codec.BOOL.optionalFieldOf("torch").forGetter(l -> Optional.ofNullable(l.getTorch())),
-                    CompoundTag.CODEC.optionalFieldOf("tag").forGetter(l -> Optional.ofNullable(l.getTag()))
+                    NbtCompound.CODEC.optionalFieldOf("tag").forGetter(l -> Optional.ofNullable(l.getTag()))
             ).apply(instance, PaletteEntry::new));
 
     private String chr;
@@ -35,7 +35,7 @@ public class PaletteEntry {
     private String mob;
     private String loot;
     private Boolean torch;
-    private CompoundTag tag;
+    private NbtCompound tag;
 
     public PaletteEntry() {
     }
@@ -100,14 +100,14 @@ public class PaletteEntry {
         return torch;
     }
 
-    public CompoundTag getTag() {
+    public NbtCompound getTag() {
         return tag;
     }
 
     public PaletteEntry(String chr, Optional<String> block, Optional<String> variant, Optional<String> frompalette,
                         Optional<List<BlockEntry>> blocks, Optional<String> damaged,
                         Optional<String> mob, Optional<String> loot, Optional<Boolean> torch,
-                        Optional<CompoundTag> tag) {
+                        Optional<NbtCompound> tag) {
         this.chr = chr;
         this.block = block.orElse(null);
         this.variant = variant.orElse(null);

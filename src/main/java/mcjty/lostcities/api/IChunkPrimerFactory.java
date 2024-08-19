@@ -1,6 +1,6 @@
 package mcjty.lostcities.api;
 
-import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.chunk.ProtoChunk;
 
 /**
  * Implement this interface in your IChunkGenerator implementation to provide

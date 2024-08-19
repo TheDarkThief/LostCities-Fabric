@@ -7,60 +7,60 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import mcjty.lostcities.editor.Editor;
 import mcjty.lostcities.setup.Registration;
-import mcjty.lostcities.varia.ComponentFactory;
+import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
-import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Formatting;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.command.argument.IdentifierArgumentType;
+import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.DefaultPosArgument;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayerEntity;
 
-public class CommandCreatePart implements Command<CommandSourceStack> {
+public class CommandCreatePart implements Command<ServerCommandSource> {
 
     private static final CommandCreatePart CMD = new CommandCreatePart();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("createpart")
-                .requires(cs -> cs.hasPermission(1))
-                .then(Commands.argument("name", ResourceLocationArgument.id())
-                        .suggests(ModCommands.getPartSuggestionProvider())
-                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("createpart")
+                .requires(cs -> cs.hasPermissionLevel(1))
+                .then(CommandManager.argument("name", IdentifierArgumentType.identifier())
+                        .suggests(ModCommandManager.getPartSuggestionProvider())
+                        .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
                                 .executes(CMD)));
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ResourceLocation name = context.getArgument("name", ResourceLocation.class);
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        Identifier name = context.getArgument("name", Identifier.class);
         BuildingPart part = null;
         try {
-            part = AssetRegistries.PARTS.get(context.getSource().getLevel(), name);
+            part = AssetRegistryKeys.PARTS.get(context.getSource().getWorld(), name);
         } catch (Exception e) {
             part = null;
         }
         if (part == null) {
-            context.getSource().sendFailure(Component.literal("Error finding part '" + name + "'!").withStyle(ChatFormatting.RED));
+            context.getSource().sendError(Text.literal("Error finding part '" + name + "'!").formatted(Formatting.RED));
             return 0;
         }
 
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        WorldCoordinates start = context.getArgument("pos", WorldCoordinates.class);
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        DefaultPosArgument start = context.getArgument("pos", DefaultPosArgument.class);
 
 
-        ServerLevel level = (ServerLevel) player.level();
+        ServerWorld level = (ServerWorld) player.getServerWorld();
         IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo(level);
         if (dimInfo == null) {
-            context.getSource().sendFailure(ComponentFactory.literal("This dimension doesn't support Lost Cities!"));
+            context.getSource().sendError(TextFactory.literal("This dimension doesn't support Lost Cities!"));
             return 0;
         }
 
-        Editor.startEditing(part, player, start.getBlockPos(context.getSource()), level, dimInfo, true);
+        Editor.startEditing(part, player, start.toAbsoluteBlockPos(context.getSource()), level, dimInfo, true);
 
         return 0;
     }

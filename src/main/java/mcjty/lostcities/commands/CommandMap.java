@@ -9,29 +9,29 @@ import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.StructureWorldAccess;
 
-public class CommandMap implements Command<CommandSourceStack> {
+public class CommandMap implements Command<ServerCommandSource> {
 
     private static final CommandMap CMD = new CommandMap();
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        return Commands.literal("map")
-                .requires(cs -> cs.hasPermission(0))
+    public static ArgumentBuilder<ServerCommandSource, ?> register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        return CommandManager.literal("map")
+                .requires(cs -> cs.hasPermissionLevel(0))
                 .executes(CMD);
     }
 
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        BlockPos position = player.blockPosition();
-        IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo((WorldGenLevel) player.level());
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        BlockPos position = player.getBlockPos();
+        IDimensionInfo dimInfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo((StructureWorldAccess) player.getServerWorld());
         if (dimInfo != null) {
             ChunkPos pos = new ChunkPos(position);
             for (int z = pos.z - 20 ; z <= pos.z + 20 ; z++) {

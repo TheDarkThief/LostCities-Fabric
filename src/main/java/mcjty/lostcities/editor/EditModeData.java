@@ -2,45 +2,54 @@ package mcjty.lostcities.editor;
 
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.varia.WorldTools;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.command.DataCommandStorage;
+import net.minecraft.datafixer.DataFixTypes;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.util.Identifier;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionOptions;
+import net.minecraft.world.PersistentState;
+import net.minecraft.world.PersistentStateManager;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
  * In a world created in editmode this structure will contain information about all generated parts
  */
-public class EditModeData extends SavedData {
+public class EditModeData extends PersistentState {
 
     public static final String NAME = "LostCityEditData";
 
     public static record PartData(String partName, int y) { }
     private final Map<ChunkCoord, List<PartData>> partData = new HashMap<>();
 
-    @Nonnull
+
+    @NotNull
     public static EditModeData getData() {
-        ServerLevel overworld = WorldTools.getOverworld();
-        DimensionDataStorage storage = overworld.getDataStorage();
-        return storage.computeIfAbsent(EditModeData::new, EditModeData::new, NAME);
+        ServerWorld overworld = WorldTools.getOverworld();
+        PersistentStateManager storage = overworld.getPersistentStateManager();
+        return storage.getOrCreate(type, NAME);
     }
 
     public EditModeData() {
     }
 
-    public EditModeData(CompoundTag nbt) {
-        ListTag data = nbt.getList("data", Tag.TAG_COMPOUND);
-        for (Tag t : data) {
-            CompoundTag pdTag = (CompoundTag) t;
-            ResourceKey<Level> level = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(pdTag.getString("level")));
+    public static EditModeData createFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup){
+        return new EditModeData(tag);
+    }
+
+    public EditModeData(NbtCompound nbt) {
+        NbtList data = nbt.getList("data", NbtElement.COMPOUND_TYPE);
+        for (NbtElement t : data) {
+            NbtCompound pdTag = (NbtCompound) t;
+            RegistryKey<World> level = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(pdTag.getString("level")));
             int chunkX = pdTag.getInt("x");
             int chunkZ = pdTag.getInt("z");
             ChunkCoord pos = new ChunkCoord(level, chunkX, chunkZ);
@@ -52,7 +61,7 @@ public class EditModeData extends SavedData {
 
     public void addPartData(ChunkCoord pos, int y, String partName) {
         partData.computeIfAbsent(pos, p -> new ArrayList<>()).add(new PartData(partName, y));
-        setDirty();
+        markDirty();
     }
 
     public List<PartData> getPartData(ChunkCoord pos) {
@@ -60,12 +69,12 @@ public class EditModeData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        ListTag data = new ListTag();
+    public NbtCompound writeNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
+        NbtList data = new NbtList();
         partData.forEach((pos, list) -> {
             for (PartData pd : list) {
-                CompoundTag pdTag = new CompoundTag();
-                pdTag.putString("level", pos.dimension().location().toString());
+                NbtCompound pdTag = new NbtCompound();
+                pdTag.putString("level", pos.dimension().getValue().toString());
                 pdTag.putInt("x", pos.chunkX());
                 pdTag.putInt("z", pos.chunkZ());
                 pdTag.putString("part", pd.partName());
@@ -76,4 +85,10 @@ public class EditModeData extends SavedData {
         tag.put("data", data);
         return tag;
     }
+
+    private static Type<EditModeData> type = new Type<EditModeData>(
+        EditModeData::new, // If there's no 'StateSaverAndLoader' yet create one
+        EditModeData::createFromNbt, // If there is a 'StateSaverAndLoader' NBT, parse it with 'createFromNbt'
+        null // Supposed to be an 'DataFixTypes' enum, but we can just pass null
+    );
 }

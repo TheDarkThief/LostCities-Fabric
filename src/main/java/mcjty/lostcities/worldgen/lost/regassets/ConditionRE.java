@@ -3,7 +3,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.ConditionPart;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class ConditionRE implements IAsset<ConditionRE> {
                     Codec.list(ConditionPart.CODEC).fieldOf("values").forGetter(l -> l.values)
             ).apply(instance, ConditionRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final List<ConditionPart> values;
 
     public ConditionRE(List<ConditionPart> values) {
@@ -27,13 +27,13 @@ public class ConditionRE implements IAsset<ConditionRE> {
     }
 
     @Override
-    public ConditionRE setRegistryName(ResourceLocation name) {
+    public ConditionRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

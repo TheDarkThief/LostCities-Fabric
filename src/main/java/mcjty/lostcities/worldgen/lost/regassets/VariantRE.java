@@ -3,7 +3,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.BlockEntry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ public class VariantRE implements IAsset<VariantRE> {
                     Codec.list(BlockEntry.CODEC).fieldOf("blocks").forGetter(l -> l.blocks)
             ).apply(instance, VariantRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final List<BlockEntry> blocks = new ArrayList<>();
 
     public VariantRE(List<BlockEntry> entries) {
@@ -28,13 +28,13 @@ public class VariantRE implements IAsset<VariantRE> {
     }
 
     @Override
-    public VariantRE setRegistryName(ResourceLocation name) {
+    public VariantRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

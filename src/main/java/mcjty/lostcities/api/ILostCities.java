@@ -1,9 +1,10 @@
 package mcjty.lostcities.api;
 
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 
 /**
  * Main interface for this mod. Use this to get city information
@@ -31,14 +32,14 @@ public interface ILostCities {
      * Get Lost City information for a given dimension. Returns null if the dimension doesn't support Lost Cities
      */
     @Nullable
-    ILostCityInformation getLostInfo(Level world);
+    ILostCityInformation getLostInfo(World world);
 
     /**
      * Register a lost city profile with a dimension. Note that this is not remembered!
      * You need to do this again after loading your world. Preferably in the chunkGenerator
      * (for example in buildSurface)
      */
-    void registerDimension(ResourceKey<Level> key, String profile);
+    void registerDimension(RegistryKey<World> key, String profile);
 
     /**
      * Call this client-side(!) before a world is created. It allows you to set the profile for the overworld

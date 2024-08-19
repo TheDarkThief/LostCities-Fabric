@@ -1,32 +1,33 @@
 package mcjty.lostcities.worldgen;
 
 import mcjty.lostcities.setup.Registration;
-import net.minecraft.core.Holder;
-import net.minecraft.server.level.WorldGenRegion;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.BiomeTags;
+import net.minecraft.world.ChunkRegion;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.util.FeatureContext;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import net.minecraftforge.common.Tags;
 
-public class LostCitySphereFeature extends Feature<NoneFeatureConfiguration> {
+public class LostCitySphereFeature extends Feature<DefaultFeatureConfig> {
 
     public LostCitySphereFeature() {
-        super(NoneFeatureConfiguration.CODEC);
+        super(DefaultFeatureConfig.CODEC);
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        WorldGenLevel level = context.level();
-        if (level instanceof WorldGenRegion) {
+    public boolean generate(FeatureContext<DefaultFeatureConfig> context) {
+        StructureWorldAccess level = context.getWorld();
+        if (level instanceof ChunkRegion) {
             IDimensionInfo diminfo = Registration.LOSTCITY_FEATURE.get().getDimensionInfo(level);
             if (diminfo != null) {
-                WorldGenRegion region = (WorldGenRegion) level;
-                ChunkPos center = region.getCenter();
-                Holder<Biome> biome = region.getBiome(center.getMiddleBlockPosition(60));
-                if (biome.is(Tags.Biomes.IS_VOID)) {
+                ChunkRegion region = (ChunkRegion) level;
+                ChunkPos center = region.getCenterPos();
+                RegistryEntry<Biome> biome = region.getBiome(center.getCenterAtY(60));
+                if (biome.isIn(BiomeTags.IS_END)) {
                     return false;
                 }
 

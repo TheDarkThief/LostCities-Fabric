@@ -4,11 +4,11 @@ import mcjty.lostcities.LostCities;
 import mcjty.lostcities.api.LostChunkCharacteristics;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
+import net.minecraft.util.Formatting;
+import net.minecraft.text.Text;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.Logger;
 
@@ -26,8 +26,8 @@ public class ErrorLogger {
             // Not reported before or too long ago
             lastReportTime = time;
             MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                player.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
+            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                player.sendMessage(Text.literal(message).formatted(Formatting.RED));
             }
         }
     }

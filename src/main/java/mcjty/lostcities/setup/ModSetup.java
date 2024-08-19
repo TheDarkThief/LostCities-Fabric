@@ -3,9 +3,7 @@ package mcjty.lostcities.setup;
 import mcjty.lostcities.api.ILostCityProfileSetup;
 import mcjty.lostcities.config.ProfileSetup;
 import mcjty.lostcities.network.PacketHandler;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,21 +22,20 @@ public class ModSetup {
     }
 
 
-    public void init(FMLCommonSetupEvent e) {
+    public void init() {
         logger = LogManager.getLogger();
 
         ProfileSetup.setupProfiles();
 
         PacketHandler.registerMessages("lostcities");
 
-        MinecraftForge.EVENT_BUS.register(new ForgeEventHandlers());
         // @todo 1.14
 //        MinecraftForge.TERRAIN_GEN_BUS.register(new TerrainEventHandlers());
 
         // @todo 1.14
-//        LootTableList.register(new ResourceLocation(LostCities.MODID, "chests/lostcitychest"));
-//        LootTableList.register(new ResourceLocation(LostCities.MODID, "chests/raildungeonchest"));
+//        LootTableList.register(Identifier.of(LostCities.MODID, "chests/lostcitychest"));
+//        LootTableList.register(Identifier.of(LostCities.MODID, "chests/raildungeonchest"));
 
-        AssetRegistries.reset();
+        AssetRegistryKeys.reset();
     }
 }

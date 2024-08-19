@@ -7,12 +7,12 @@ import mcjty.lostcities.worldgen.lost.regassets.PaletteRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.BlockEntry;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
 import mcjty.lostcities.worldgen.lost.regassets.data.PaletteEntry;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.World;
+import net.minecraft.block.BlockState;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class Palette implements ILostCityAsset {
 
-    private final ResourceLocation name;
+    private final Identifier name;
     private final Map<Character, PE> palette = new HashMap<>();
     private final Map<BlockState, BlockState> damaged = new HashMap<>();
 
@@ -36,7 +36,7 @@ public class Palette implements ILostCityAsset {
     }
 
     public Palette(String name) {
-        this.name = new ResourceLocation(LostCities.MODID, name);
+        this.name = Identifier.of(LostCities.MODID, name);
     }
 
     public void merge(Palette other) {
@@ -50,7 +50,7 @@ public class Palette implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 
@@ -82,8 +82,8 @@ public class Palette implements ILostCityAsset {
             } else if (entry.getVariant() != null) {
                 String variantName = entry.getVariant();
                 MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-                ServerLevel level = server.getLevel(Level.OVERWORLD);
-                Variant variant = AssetRegistries.VARIANTS.getOrThrow(level, variantName);
+                ServerWorld level = server.getWorld(World.OVERWORLD);
+                Variant variant = AssetRegistryKeys.VARIANTS.getOrThrow(level, variantName);
                 List<Pair<Integer, BlockState>> blocks = variant.getBlocks();
                 if (dmg != null) {
                     for (Pair<Integer, BlockState> pair : blocks) {
@@ -118,7 +118,7 @@ public class Palette implements ILostCityAsset {
         return this;
     }
 
-    public record Info(String mobId, String loot, boolean isTorch, CompoundTag tag) {
+    public record Info(String mobId, String loot, boolean isTorch, NbtCompound tag) {
         public boolean isSpecial() {
             return mobId != null || loot != null || isTorch || tag != null;
         }

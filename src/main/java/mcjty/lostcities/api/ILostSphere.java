@@ -1,7 +1,7 @@
 package mcjty.lostcities.api;
 
 import mcjty.lostcities.varia.ChunkCoord;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 
 public interface ILostSphere {
 

@@ -3,10 +3,10 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,12 +23,12 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
                     Codec.list(CityBiomeMultiplier.CODEC).optionalFieldOf("citybiomemultipliers").forGetter(l -> Optional.ofNullable(l.cityBiomeMultipliers))
             ).apply(instance, WorldStyleRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
     private final String outsideStyle;
     private final MultiSettings multiSettings;
     private final ScatteredSettings scatteredSettings;
     private final CitySphereSettings citysphereSettings;
-    @Nonnull private final PartSelector partSelector;
+    @NotNull private final PartSelector partSelector;
     private final List<CityStyleSelector> cityStyleSelectors;
     private final List<CityBiomeMultiplier> cityBiomeMultipliers;
 
@@ -52,7 +52,7 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
         return outsideStyle;
     }
 
-    @Nonnull
+    @NotNull
     public PartSelector getPartSelector() {
         return partSelector;
     }
@@ -79,13 +79,13 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
     }
 
     @Override
-    public WorldStyleRE setRegistryName(ResourceLocation name) {
+    public WorldStyleRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

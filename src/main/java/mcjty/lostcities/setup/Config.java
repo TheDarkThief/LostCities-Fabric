@@ -4,11 +4,11 @@ import com.google.common.collect.Lists;
 import mcjty.lostcities.LostCities;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.config.ProfileSetup;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.*;
@@ -25,7 +25,7 @@ public class Config {
             "lostcities:lostcity=default"
     };
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DIMENSION_PROFILES;
-    private static Map<ResourceKey<Level>, String> dimensionProfileCache = null;
+    private static Map<RegistryKey<World>, String> dimensionProfileCache = null;
 
     // Profile as selected by the client
     public static String profileFromClient = null;
@@ -44,7 +44,7 @@ public class Config {
             "minecraft:pillager_outpost"
     };
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> AVOID_STRUCTURES;
-    private static final Set<ResourceLocation> AVOID_STRUCTURES_SET = new HashSet<>();
+    private static final Set<Identifier> AVOID_STRUCTURES_SET = new HashSet<>();
     public static final ForgeConfigSpec.BooleanValue AVOID_STRUCTURES_ADJACENT;
     public static final ForgeConfigSpec.BooleanValue AVOID_VILLAGES_ADJACENT;
     public static final ForgeConfigSpec.BooleanValue AVOID_FLATTENING;
@@ -60,14 +60,14 @@ public class Config {
     }
 
     // @todo BAD
-    public static void registerLostCityDimension(ResourceKey<Level> type, String profile) {
+    public static void registerLostCityDimension(RegistryKey<World> type, String profile) {
         String profileForDimension = getProfileForDimension(type);
         if (profileForDimension == null) {
             dimensionProfileCache.put(type, profile);
         }
     }
 
-    public static String getProfileForDimension(ResourceKey<Level> type) {
+    public static String getProfileForDimension(RegistryKey<World> type) {
         if (dimensionProfileCache == null) {
             dimensionProfileCache = new HashMap<>();
             for (String dp : DIMENSION_PROFILES.get()) {
@@ -75,7 +75,7 @@ public class Config {
                 if (split.length != 2) {
                     LostCities.getLogger().error("Bad format for config value: '{}'!", dp);
                 } else {
-                    ResourceKey<Level> dimensionType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(split[0]));
+                    RegistryKey<World> dimensionType = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(split[0]));
                     String profileName = split[1];
                     LostCityProfile profile = ProfileSetup.STANDARD_PROFILES.get(profileName);
                     if (profile != null) {
@@ -101,7 +101,7 @@ public class Config {
                 }
             }
             if (!selectedProfile.isEmpty()) {
-                dimensionProfileCache.put(Level.OVERWORLD, selectedProfile);
+                dimensionProfileCache.put(World.OVERWORLD, selectedProfile);
                 String json = Config.SELECTED_CUSTOM_JSON.get();
                 if (json != null && !json.isEmpty()) {
                     LostCityProfile profile = new LostCityProfile("customized", json);
@@ -112,20 +112,20 @@ public class Config {
                 }
             }
 
-            String profile = getProfileForDimension(Level.OVERWORLD);
+            String profile = getProfileForDimension(World.OVERWORLD);
             if (profile != null && !profile.isEmpty()) {
                 if (ProfileSetup.STANDARD_PROFILES.get(profile).GENERATE_NETHER) {
-                    dimensionProfileCache.put(Level.NETHER, "cavern");
+                    dimensionProfileCache.put(World.NETHER, "cavern");
                 }
             }
         }
         return dimensionProfileCache.get(type);
     }
 
-    public static boolean isAvoidedStructure(ResourceLocation id) {
+    public static boolean isAvoidedStructure(Identifier id) {
         if (AVOID_STRUCTURES_SET.isEmpty()) {
             for (String s : AVOID_STRUCTURES.get()) {
-                AVOID_STRUCTURES_SET.add(new ResourceLocation(s));
+                AVOID_STRUCTURES_SET.add(Identifier.of(s));
             }
         }
         return AVOID_STRUCTURES_SET.contains(id);

@@ -1,11 +1,11 @@
 package mcjty.lostcities.varia;
 
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.BlockPos;
 
 public class GeometryTools {
 
-    public static double squaredDistanceBoxPoint(AABB chunkBox, BlockPos center) {
+    public static double squaredDistanceBoxPoint(Box chunkBox, BlockPos center) {
         double dmin = 0;
 
         if (center.getX() < chunkBox.minX) {
@@ -28,7 +28,7 @@ public class GeometryTools {
         return dmin;
     }
 
-    public static double maxSquaredDistanceBoxPoint(AABB chunkBox, BlockPos center) {
+    public static double maxSquaredDistanceBoxPoint(Box chunkBox, BlockPos center) {
         double dmax = 0;
 
         if (center.getX() < (chunkBox.minX + chunkBox.maxX) / 2) {

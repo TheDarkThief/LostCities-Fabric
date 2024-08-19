@@ -5,19 +5,19 @@ import mcjty.lostcities.worldgen.lost.regassets.PredefinedCityRE;
 import mcjty.lostcities.worldgen.lost.regassets.data.DataTools;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedBuilding;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedStreet;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PredefinedCity implements ILostCityAsset {
 
-    private final ResourceLocation name;
-    private final ResourceKey<Level> dimension;
+    private final Identifier name;
+    private final RegistryKey<World> dimension;
     private final int chunkX;
     private final int chunkZ;
     private final int radius;
@@ -27,7 +27,7 @@ public class PredefinedCity implements ILostCityAsset {
 
     public PredefinedCity(PredefinedCityRE object) {
         name = object.getRegistryName();
-        dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(object.getDimension()));
+        dimension = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(object.getDimension()));
         chunkX = object.getChunkX();
         chunkZ = object.getChunkZ();
         radius = object.getRadius();
@@ -40,7 +40,7 @@ public class PredefinedCity implements ILostCityAsset {
         }
     }
 
-    public ResourceKey<Level> getDimension() {
+    public RegistryKey<World> getDimension() {
         return dimension;
     }
 
@@ -74,7 +74,7 @@ public class PredefinedCity implements ILostCityAsset {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return name;
     }
 }

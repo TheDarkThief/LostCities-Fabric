@@ -1,19 +1,19 @@
 package mcjty.lostcities.varia;
 
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.synth.SimplexNoise;
+import net.minecraft.util.math.random.CheckedRandom;
+import net.minecraft.util.math.noise.SimplexNoiseSampler;
 
 // @todo 1.15 copy from 1.14: use the 1.15 version!
 public class PerlinNoiseGenerator14 {
-   private final SimplexNoise[] noiseLevels;
+   private final SimplexNoiseSampler[] noiseLevels;
    private final int levels;
 
    public PerlinNoiseGenerator14(long seed, int levelsIn) {
       this.levels = levelsIn;
-      this.noiseLevels = new SimplexNoise[levelsIn];
+      this.noiseLevels = new SimplexNoiseSampler[levelsIn];
 
       for(int i = 0; i < levelsIn; ++i) {
-         this.noiseLevels[i] = new SimplexNoise(new LegacyRandomSource(seed));
+         this.noiseLevels[i] = new SimplexNoiseSampler(new CheckedRandom(seed));
       }
 
    }
@@ -27,7 +27,7 @@ public class PerlinNoiseGenerator14 {
       double d1 = 1.0D;
 
       for(int i = 0; i < this.levels; ++i) {
-         d0 += this.noiseLevels[i].getValue(x * d1 + (useNoiseOffsets ? this.noiseLevels[i].xo : 0.0D), y * d1 + (useNoiseOffsets ? this.noiseLevels[i].yo : 0.0D)) / d1;
+         d0 += this.noiseLevels[i].sample(x * d1 + (useNoiseOffsets ? this.noiseLevels[i].originX : 0.0D), y * d1 + (useNoiseOffsets ? this.noiseLevels[i].originY : 0.0D)) / d1;
          d1 /= 2.0D;
       }
 

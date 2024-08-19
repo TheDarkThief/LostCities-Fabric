@@ -3,7 +3,7 @@ package mcjty.lostcities.worldgen.lost.regassets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.worldgen.lost.regassets.data.PaletteSelector;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class StyleRE implements IAsset<StyleRE> {
                     Codec.list(Codec.list(PaletteSelector.CODEC)).fieldOf("randompalettes").forGetter(l -> l.randomPaletteChoices)
             ).apply(instance, StyleRE::new));
 
-    private ResourceLocation name;
+    private Identifier name;
 
     private final List<List<PaletteSelector>> randomPaletteChoices;
 
@@ -28,13 +28,13 @@ public class StyleRE implements IAsset<StyleRE> {
     }
 
     @Override
-    public StyleRE setRegistryName(ResourceLocation name) {
+    public StyleRE setRegistryName(Identifier name) {
         this.name = name;
         return this;
     }
 
     @Nullable
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return name;
     }
 }

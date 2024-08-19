@@ -1,13 +1,13 @@
 package mcjty.lostcities.api;
 
 import mcjty.lostcities.worldgen.lost.cityassets.Palette;
-import net.minecraft.world.level.CommonLevelAccessor;
+import net.minecraft.world.RegistryWorldView;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public interface ILostCityBuilding extends ILostCityAsset {
 
-    Palette getLocalPalette(CommonLevelAccessor level);
+    Palette getLocalPalette(RegistryWorldView level);
 
     /**
      * The chance this this building is alone. If 1.0f this building wants to be alone all the time. If 0.0f (default)

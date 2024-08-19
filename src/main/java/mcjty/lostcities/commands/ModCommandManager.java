@@ -4,23 +4,22 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import mcjty.lostcities.LostCities;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
 import mcjty.lostcities.worldgen.lost.cityassets.Building;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.server.commands.ResetChunksCommand;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.command.CommandSource;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class ModCommands {
+public class ModCommandManager {
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralCommandNode<CommandSourceStack> commands = dispatcher.register(
-                Commands.literal(LostCities.MODID)
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        LiteralCommandNode<ServerCommandSource> commands = dispatcher.register(
+                CommandManager.literal(LostCities.MODID)
                         .then(CommandCreateBuilding.register(dispatcher))
                         .then(CommandDebug.register(dispatcher))
                         .then(CommandStats.register(dispatcher))
@@ -35,23 +34,23 @@ public class ModCommands {
                         .then(CommandTestFill.register(dispatcher))
         );
 
-        dispatcher.register(Commands.literal("lost").redirect(commands));
+        dispatcher.register(CommandManager.literal("lost").redirect(commands));
         ResetChunksCommand.register(dispatcher);
     }
 
-    @Nonnull
-    static SuggestionProvider<CommandSourceStack> getPartSuggestionProvider() {
+    @NotNull
+    static SuggestionProvider<ServerCommandSource> getPartSuggestionProvider() {
         return (context, builder) -> {
-            Stream<BuildingPart> stream = StreamSupport.stream(AssetRegistries.PARTS.getIterable().spliterator(), false);
-            return SharedSuggestionProvider.suggest(stream.map(b -> b.getId().toString()), builder);
+            Stream<BuildingPart> stream = StreamSupport.stream(AssetRegistryKeys.PARTS.getIterable().spliterator(), false);
+            return CommandSource.suggest(stream.map(b -> b.getId().toString()), builder);
         };
     }
 
-    @Nonnull
-    static SuggestionProvider<CommandSourceStack> getBuildingSuggestionProvider() {
+    @NotNull
+    static SuggestionProvider<ServerCommandSource> getBuildingSuggestionProvider() {
         return (context, builder) -> {
-            Stream<Building> stream = StreamSupport.stream(AssetRegistries.BUILDINGS.getIterable().spliterator(), false);
-            return SharedSuggestionProvider.suggest(stream.map(b -> b.getId().toString()), builder);
+            Stream<Building> stream = StreamSupport.stream(AssetRegistryKeys.BUILDINGS.getIterable().spliterator(), false);
+            return CommandSource.suggest(stream.map(b -> b.getId().toString()), builder);
         };
     }
 }

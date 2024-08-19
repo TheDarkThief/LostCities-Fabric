@@ -4,23 +4,23 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import mcjty.lostcities.varia.ComponentFactory;
-import net.minecraft.network.chat.Component;
+import mcjty.lostcities.varia.TextFactory;
+import net.minecraft.text.Text;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Configuration {
 
     public static class Value<T> {
-        private final Component comment;
+        private final Text comment;
         private T value;
         private final T min;
         private final T max;
         private final Comparator<T> comparator;
 
-        public Value(String comment, T value, T min, T max, @Nonnull Comparator<T> comparator) {
-            this.comment = ComponentFactory.literal(comment);
+        public Value(String comment, T value, T min, T max, @NotNull Comparator<T> comparator) {
+            this.comment = TextFactory.literal(comment);
             this.value = value;
             this.min = min;
             this.max = max;
@@ -35,7 +35,7 @@ public class Configuration {
             return value;
         }
 
-        public Component getComment() {
+        public Text getComment() {
             return comment;
         }
 
@@ -162,7 +162,7 @@ public class Configuration {
     }
 
     private <T> Category getValueCategory(String name, String category, T defaultValue, String description, T min, T max,
-                                          @Nonnull Comparator<T> comparator) {
+                                          @NotNull Comparator<T> comparator) {
         Category cat = categoryMap.get(category);
         if (cat == null) {
             throw new IllegalStateException("Missing category: " + category);
