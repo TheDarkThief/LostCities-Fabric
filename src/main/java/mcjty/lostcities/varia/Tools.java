@@ -20,7 +20,6 @@ import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.state.property.Property;
-import net.minecraftforge.registries.ForgeRegistryKeys;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.*;
@@ -49,7 +48,7 @@ public class Tools {
 
     public static String stateToString(BlockState state) {
         StringBuilder stringbuilder = new StringBuilder();
-        stringbuilder.append(ForgeRegistryKeys.BLOCKS.getKey(state.getBlock()));
+        stringbuilder.append(Registries.BLOCK.getKey(state.getBlock()));
         if (!state.getEntries().isEmpty()) {
             stringbuilder.append('[');
             stringbuilder.append(state.getEntries().entrySet().stream().map(PROPERTY_MAPPER).collect(Collectors.joining(",")));
@@ -62,15 +61,15 @@ public class Tools {
     public static BlockState stringToState(String s) {
         if (s.contains("[")) {
             try {
-                BlockArgumentParser.BlockResult parser = BlockArgumentParser.parseForBlock(WorldTools.getOverworld().holderLookup(RegistryKeys.BLOCK), new StringReader(s), false);
+                BlockArgumentParser.BlockResult parser = BlockArgumentParser.block(WorldTools.getOverworld().createCommandRegistryWrapper(RegistryKeys.BLOCK), new StringReader(s), false);
                 return parser.blockState();
             } catch (CommandSyntaxException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        String converted = BlockStateFlattening.upgradeBlock(s);
-        Block value = ForgeRegistryKeys.BLOCKS.getValue(Identifier.of(converted));
+        String converted = BlockStateFlattening.lookupBlock(s);
+        Block value = Registries.BLOCK.get(Identifier.of(converted));
         if (value == null) {
             throw new RuntimeException("Cannot find block: '" + s + "'!");
         }
@@ -129,8 +128,8 @@ public class Tools {
 
     public static int getSeaLevel(WorldView level) {
         if (level instanceof StructureWorldAccess wgLevel) {
-            if (wgLevel.getChunkSource() instanceof ServerChunkManager scc) {
-                return scc.getGenerator().getSeaLevel();
+            if (wgLevel.getChunkManager() instanceof ServerChunkManager scc) {
+                return scc.getChunkGenerator().getSeaLevel();
             }
         }
         //noinspection deprecation
