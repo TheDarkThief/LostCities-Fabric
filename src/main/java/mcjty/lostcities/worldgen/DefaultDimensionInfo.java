@@ -2,7 +2,7 @@ package mcjty.lostcities.worldgen;
 
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.varia.ChunkCoord;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.WorldStyle;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -40,7 +40,7 @@ public class DefaultDimensionInfo implements IDimensionInfo {
         this.world = world;
         this.profile = profile;
         this.profileOutside = profileOutside;
-        style = AssetRegistryKeys.WORLDSTYLES.get(world, profile.getWorldStyle());
+        style = AssetRegistries.WORLDSTYLES.get(world, profile.getWorldStyle());
         random = new java.util.Random(world.getSeed());
         Random Random = new CheckedRandom(world.getSeed());
         feature = new LostCityTerrainFeature(this, profile, Random);

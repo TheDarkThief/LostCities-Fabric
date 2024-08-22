@@ -53,7 +53,7 @@ public class Style implements ILostCityAsset {
             for (Pair<Float, String> pair : pairs) {
                 r -= pair.getKey();
                 if (r <= 0) {
-                    tomerge = AssetRegistryKeys.PALETTES.getOrThrow(provider.getWorld(), pair.getRight());
+                    tomerge = AssetRegistries.PALETTES.getOrThrow(provider.getWorld(), pair.getRight());
                     break;
                 }
             }

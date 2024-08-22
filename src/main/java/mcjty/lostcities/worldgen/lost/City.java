@@ -49,7 +49,7 @@ public class City {
     public static PredefinedCity getPredefinedCity(ChunkCoord coord) {
         if (predefinedCityMap == null) {
             predefinedCityMap = new HashMap<>();
-            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
                 predefinedCityMap.put(new ChunkCoord(city.getDimension(), city.getChunkX(), city.getChunkZ()), city);
             }
         }
@@ -88,7 +88,7 @@ public class City {
                 PredefinedBuilding pb = entry.getValue();
                 ChunkCoord root = entry.getKey();
                 if (pb.multi()) {
-                    MultiBuilding building = AssetRegistryKeys.MULTI_BUILDINGS.getOrThrow(provider.getWorld(), pb.building());
+                    MultiBuilding building = AssetRegistries.MULTI_BUILDINGS.getOrThrow(provider.getWorld(), pb.building());
                     // Add all occupied chunkcoords for the building to the occupied set
                     for (int x = 0 ; x < building.getDimX() ; x++) {
                         for (int z = 0 ; z < building.getDimZ() ; z++) {
@@ -102,7 +102,7 @@ public class City {
         }
         if (OCCUPIED_CHUNKS_STREET == null) {
             OCCUPIED_CHUNKS_STREET = new HashMap<>();
-            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
                 for (PredefinedStreet street : city.getPredefinedStreets()) {
                     OCCUPIED_CHUNKS_STREET.put(new ChunkCoord(city.getDimension(),
                             city.getChunkX() + street.relChunkX(), city.getChunkZ() + street.relChunkZ()), street);
@@ -114,7 +114,7 @@ public class City {
     private static void calculateMap() {
         if (predefinedBuildingMap == null) {
             predefinedBuildingMap = new HashMap<>();
-            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
                 for (PredefinedBuilding building : city.getPredefinedBuildings()) {
                     predefinedBuildingMap.put(new ChunkCoord(city.getDimension(),
                             city.getChunkX() + building.relChunkX(), city.getChunkZ() + building.relChunkZ()), building);
@@ -126,7 +126,7 @@ public class City {
     public static PredefinedStreet getPredefinedStreet(ChunkCoord coord) {
         if (predefinedStreetMap == null) {
             predefinedStreetMap = new HashMap<>();
-            for (PredefinedCity city : AssetRegistryKeys.PREDEFINED_CITIES.getIterable()) {
+            for (PredefinedCity city : AssetRegistries.PREDEFINED_CITIES.getIterable()) {
                 for (PredefinedStreet street : city.getPredefinedStreets()) {
                     predefinedStreetMap.put(new ChunkCoord(city.getDimension(),
                             city.getChunkX() + street.relChunkX(), city.getChunkZ() + street.relChunkZ()), street);
@@ -261,7 +261,7 @@ public class City {
                 cityStyleName = fromList.getRight();
             }
         }
-        return AssetRegistryKeys.CITYSTYLES.get(provider.getWorld(), cityStyleName);
+        return AssetRegistries.CITYSTYLES.get(provider.getWorld(), cityStyleName);
     }
 
     public static float getCityFactor(ChunkCoord coord, IDimensionInfo provider, LostCityProfile profile) {
@@ -319,7 +319,7 @@ public class City {
         }
 
         if (factor > 0.0001 && provider.getWorld() != null) {
-            WorldStyle worldStyle = AssetRegistryKeys.WORLDSTYLES.get(provider.getWorld(), profile.getWorldStyle());
+            WorldStyle worldStyle = AssetRegistries.WORLDSTYLES.get(provider.getWorld(), profile.getWorldStyle());
             float multiplier = worldStyle.getCityChanceMultiplier(provider, coord);
             factor *= multiplier;
         }

@@ -12,7 +12,7 @@ import mcjty.lostcities.varia.WorldTools;
 import mcjty.lostcities.worldgen.GlobalTodo;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.*;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.PredefinedCity;
 import mcjty.lostcities.worldgen.lost.cityassets.PredefinedSphere;
 import net.minecraft.util.Formatting;
@@ -116,7 +116,7 @@ public class FabricEventHandlers {
     @SubscribeEvent
     public void onWorldTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerWorld serverLevel) {
-            AssetRegistryKeys.load(serverLevel);
+            AssetRegistries.load(serverLevel);
             GlobalTodo.get(event.level).executeAndClearTodo(serverLevel);
         }
     }
@@ -164,7 +164,7 @@ public class FabricEventHandlers {
                     needsCheck = true;
                 }
             } else if (!profile.SPAWN_CITY.isEmpty()) {
-                final PredefinedCity city = AssetRegistryKeys.PREDEFINED_CITIES.get(world, profile.SPAWN_CITY);
+                final PredefinedCity city = AssetRegistries.PREDEFINED_CITIES.get(world, profile.SPAWN_CITY);
                 if (city == null) {
                     ModSetup.getLogger().error("Cannot find city '{}' for the player to spawn in !", profile.SPAWN_CITY);
                 } else {
@@ -197,7 +197,7 @@ public class FabricEventHandlers {
                     };
                     needsCheck = true;
                 } else {
-                    final PredefinedSphere sphere = AssetRegistryKeys.PREDEFINED_SPHERES.get(world, profile.SPAWN_SPHERE);
+                    final PredefinedSphere sphere = AssetRegistries.PREDEFINED_SPHERES.get(world, profile.SPAWN_SPHERE);
                     if (sphere == null) {
                         LostCities.setup.getLogger().error("Cannot find sphere '" + profile.SPAWN_SPHERE + "' for the player to spawn in !");
                     } else {

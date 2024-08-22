@@ -5,7 +5,7 @@ import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.config.ProfileSetup;
 import mcjty.lostcities.setup.Config;
 import mcjty.lostcities.setup.FabricEventHandlers;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.world.ChunkRegion;
@@ -98,7 +98,7 @@ public class LostCityFeature extends Feature<DefaultFeatureConfig> {
     public void cleanUp() {
         LostCities.lostCitiesImp.cleanUp();
         FabricEventHandlers.cleanUp();
-        AssetRegistryKeys.reset();
+        AssetRegistries.reset();
         dimensionInfo.clear();
         dimensionInfoDirtyCounter = globalDimensionInfoDirtyCounter;
     }

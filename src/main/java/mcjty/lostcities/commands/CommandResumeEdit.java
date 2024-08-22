@@ -11,7 +11,7 @@ import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.command.CommandManager;
@@ -48,7 +48,7 @@ public class CommandResumeEdit implements Command<ServerCommandSource> {
 
         ChunkPos cp = new ChunkPos(start);
         for (EditModeData.PartData data : EditModeData.getData().getPartData(new ChunkCoord(level.dimension(), cp.x, cp.z))) {
-            BuildingPart part = AssetRegistryKeys.PARTS.get(level, data.partName());
+            BuildingPart part = AssetRegistries.PARTS.get(level, data.partName());
             if (part == null) {
                 context.getSource().sendError(TextFactory.literal("Unknown part '" + data.partName() + "' in this chunk!"));
                 return 0;

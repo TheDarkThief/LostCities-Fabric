@@ -9,7 +9,7 @@ import mcjty.lostcities.editor.Editor;
 import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
 import net.minecraft.util.Formatting;
 import net.minecraft.server.command.ServerCommandSource;
@@ -40,7 +40,7 @@ public class CommandCreatePart implements Command<ServerCommandSource> {
         Identifier name = context.getArgument("name", Identifier.class);
         BuildingPart part = null;
         try {
-            part = AssetRegistryKeys.PARTS.get(context.getSource().getWorld(), name);
+            part = AssetRegistries.PARTS.get(context.getSource().getWorld(), name);
         } catch (Exception e) {
             part = null;
         }

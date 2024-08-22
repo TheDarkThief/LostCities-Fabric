@@ -16,7 +16,7 @@ import mcjty.lostcities.varia.TextFactory;
 import mcjty.lostcities.varia.Tools;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
 import mcjty.lostcities.worldgen.lost.cityassets.CompiledPalette;
 import mcjty.lostcities.worldgen.lost.cityassets.Palette;
@@ -59,7 +59,7 @@ public class CommandExportPart implements Command<ServerCommandSource> {
             return 0;
         }
 
-        BuildingPart part = AssetRegistryKeys.PARTS.get(context.getSource().getWorld(), editorInfo.getPartName());
+        BuildingPart part = AssetRegistries.PARTS.get(context.getSource().getWorld(), editorInfo.getPartName());
         if (part == null) {
             context.getSource().sendError(Text.literal("Error finding part '" + editorInfo.getPartName() + "'!").formatted(Formatting.RED));
             return 0;

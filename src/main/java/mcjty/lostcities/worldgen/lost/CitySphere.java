@@ -4,7 +4,7 @@ import mcjty.lostcities.api.ILostSphere;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.IDimensionInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.CityStyle;
 import mcjty.lostcities.worldgen.lost.cityassets.PredefinedCity;
 import mcjty.lostcities.worldgen.lost.cityassets.PredefinedSphere;
@@ -398,7 +398,7 @@ public class CitySphere implements ILostSphere {
     @NotNull
     public static synchronized CitySphere getCitySphere(ChunkCoord coord, IDimensionInfo provider) {
         if (!CITY_SPHERE_CACHE.containsKey(coord)) {
-            for (PredefinedSphere predef : AssetRegistryKeys.PREDEFINED_SPHERES.getIterable()) {
+            for (PredefinedSphere predef : AssetRegistries.PREDEFINED_SPHERES.getIterable()) {
                 if (predef.getDimension() == provider.getType()) {
                     if (intersectChunkWithSphere(coord.chunkX(), coord.chunkZ(), predef.getRadius(), new BlockPos(predef.getCenterX(), 0, predef.getCenterZ()))) {
                         ChunkCoord center = new ChunkCoord(provider.getType(), predef.getChunkX(), predef.getChunkZ());

@@ -8,9 +8,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.text.Text;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraftforge.server.ServerLifecycleHooks;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.entity.player.PlayerEntity;import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;

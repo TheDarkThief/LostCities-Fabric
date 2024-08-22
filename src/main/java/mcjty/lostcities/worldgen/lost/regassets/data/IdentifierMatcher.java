@@ -43,7 +43,7 @@ public class IdentifierMatcher implements Predicate<Identifier> {
         }
     }
 
-    public static final IdentifierMatcher ANY = Identifier.ofMatcher(Optional.empty(), Optional.empty()) {
+    public static final IdentifierMatcher ANY = new IdentifierMatcher(Optional.empty(), Optional.empty()) {
         @Override
         public boolean test(Identifier str) {
             return true;

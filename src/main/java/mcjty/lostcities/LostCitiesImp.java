@@ -7,7 +7,7 @@ import mcjty.lostcities.setup.Registration;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.BuildingInfo;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.StructureWorldAccess;
@@ -81,17 +81,17 @@ public class LostCitiesImp implements ILostCities {
 
         @Override
         public ILostCityAssetRegistry<ILostCityBuilding> getBuildings() {
-            return AssetRegistryKeys.BUILDINGS.cast();
+            return AssetRegistries.BUILDINGS.cast();
         }
 
         @Override
         public ILostCityAssetRegistry<ILostCityMultiBuilding> getMultiBuildings() {
-            return AssetRegistryKeys.MULTI_BUILDINGS.cast();
+            return AssetRegistries.MULTI_BUILDINGS.cast();
         }
 
         @Override
         public ILostCityAssetRegistry<ILostCityCityStyle> getCityStyles() {
-            return AssetRegistryKeys.CITYSTYLES.cast();
+            return AssetRegistries.CITYSTYLES.cast();
         }
     }
 }

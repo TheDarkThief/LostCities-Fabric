@@ -13,7 +13,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.block.BlockState;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -83,7 +82,7 @@ public class Palette implements ILostCityAsset {
                 String variantName = entry.getVariant();
                 MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
                 ServerWorld level = server.getWorld(World.OVERWORLD);
-                Variant variant = AssetRegistryKeys.VARIANTS.getOrThrow(level, variantName);
+                Variant variant = AssetRegistries.VARIANTS.getOrThrow(level, variantName);
                 List<Pair<Integer, BlockState>> blocks = variant.getBlocks();
                 if (dmg != null) {
                     for (Pair<Integer, BlockState> pair : blocks) {

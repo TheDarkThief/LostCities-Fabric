@@ -22,7 +22,12 @@ import net.minecraft.block.BlockState;
 import net.minecraft.state.property.Property;
 
 import org.jetbrains.annotations.Nullable;
-import java.util.*;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -97,6 +102,27 @@ public class Tools {
     // }
 
     public static <T> T getRandomFromList(Random random, List<T> list, Function<T, Float> weightGetter) {
+        if (list.isEmpty()) {
+            return null;
+        }
+        List<T> elements = new ArrayList<>();
+        float totalweight = 0;
+        for (T pair : list) {
+            elements.add(pair);
+            totalweight += weightGetter.apply(pair);
+        }
+        float r = random.nextFloat() * totalweight;
+        for (T pair : elements) {
+            r -= weightGetter.apply(pair);
+            if (r <= 0) {
+                return pair;
+            }
+        }
+        return null;
+    }
+
+    //java.util.Random version
+    public static <T> T getRandomFromList(java.util.Random random, List<T> list, Function<T, Float> weightGetter) {
         if (list.isEmpty()) {
             return null;
         }

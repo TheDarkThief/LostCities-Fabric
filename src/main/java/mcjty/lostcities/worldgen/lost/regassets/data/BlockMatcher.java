@@ -3,13 +3,13 @@ package mcjty.lostcities.worldgen.lost.regassets.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.varia.Tools;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraftforge.event.level.PistonEvent;
-import net.minecraftforge.registries.ForgeRegistryKeys;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +34,7 @@ public class BlockMatcher implements Predicate<BlockState> {
             TagKey<Block> tagKey = TagKey.of(RegistryKeys.BLOCK, Identifier.of(matcher.substring(1)));
             return state -> state.isIn(tagKey);
         } else {
-            Block b = ForgeRegistryKeys.BLOCKS.getValue(Identifier.of(matcher));
+            Block b = Registries.BLOCK.get(Identifier.of(matcher));
             return state -> state.getBlock() == b;
         }
     }
@@ -48,7 +48,7 @@ public class BlockMatcher implements Predicate<BlockState> {
             TagKey<Block> tagKey = TagKey.of(RegistryKeys.BLOCK, Identifier.of(matcher.substring(1)));
             return state -> !state.isIn(tagKey);
         } else {
-            Block b = ForgeRegistryKeys.BLOCKS.getValue(Identifier.of(matcher));
+            Block b = Registries.BLOCK.get(Identifier.of(matcher));
             return state -> state.getBlock() != b;
         }
     }

@@ -2,6 +2,7 @@ package mcjty.lostcities.worldgen;
 
 import mcjty.lostcities.setup.Registration;
 import net.minecraft.registry.entry.RegistryEntry;
+import mcjty.lostcities.worldgen.gen.Spheres;
 import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.world.ChunkRegion;
 import net.minecraft.util.math.ChunkPos;
@@ -10,7 +11,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.util.FeatureContext;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
-import net.minecraftforge.common.Tags;
+
 
 public class LostCitySphereFeature extends Feature<DefaultFeatureConfig> {
 
@@ -34,7 +35,7 @@ public class LostCitySphereFeature extends Feature<DefaultFeatureConfig> {
                 int chunkX = center.x;
                 int chunkZ = center.z;
                 diminfo.setWorld(level);
-                diminfo.getFeature().generateSpheres(region, region.getChunk(chunkX, chunkZ));
+                Spheres.generateSpheres(diminfo.getFeature(), region, region.getChunk(chunkX, chunkZ));
                 return true;
             }
         }

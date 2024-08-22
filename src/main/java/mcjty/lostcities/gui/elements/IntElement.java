@@ -28,7 +28,7 @@ public class IntElement extends GuiElement {
 //                });
 //            }
         };
-        field.setResponder(s -> {
+        field.setChangedListener(s -> {
             gui.getLocalSetup().get().ifPresent(profile -> {
                 Configuration configuration = profile.toConfiguration();
 
@@ -88,9 +88,9 @@ public class IntElement extends GuiElement {
 
     private void with(Object result) {
         if (result instanceof Float) {
-            field.with(Float.toString((Float)result));
+            field.write(Float.toString((Float)result));
         } else if (result instanceof Integer) {
-            field.with(Integer.toString((Integer)result));
+            field.write(Integer.toString((Integer)result));
         }
     }
 

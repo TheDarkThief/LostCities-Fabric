@@ -69,7 +69,7 @@ public class Building implements ILostCityBuilding {
     @Override
     public Palette getLocalPalette(RegistryWorldView level) {
         if (localPalette == null && refPaletteName != null) {
-            localPalette = AssetRegistryKeys.PALETTES.getOrThrow(level, refPaletteName);
+            localPalette = AssetRegistries.PALETTES.getOrThrow(level, refPaletteName);
         }
         return localPalette;
     }

@@ -11,7 +11,7 @@ public class DataGenerators {
 
     @SubscribeEvent
     public static void gatherData(GatherDataEvent event) {
-        DataGenerator generator = event.getGenerator();
+        DataGenerator generator = event.getChunkGenerator();
         if (event.includeServer()) {
             LCBlockTags blockTags = new LCBlockTags(generator, event.getLookupProvider(), event.getExistingFileHelper());
             generator.addProvider(event.includeServer(), blockTags);

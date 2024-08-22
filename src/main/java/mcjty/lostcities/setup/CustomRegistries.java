@@ -4,51 +4,51 @@ import mcjty.lostcities.LostCities;
 import mcjty.lostcities.worldgen.lost.regassets.*;
 import mcjty.lostcities.worldgen.lost.regassets.StuffSettingsRE;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DataPackRegistryEvent;
 import net.minecraftforge.registries.DeferredRegister;
 
 public class CustomRegistries {
 
-    public static final ResourceKey<Registry<BuildingRE>> BUILDING_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "buildings"));
+    public static final RegistryKey<Registry<BuildingRE>> BUILDING_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "buildings"));
     public static final DeferredRegister<BuildingRE> BUILDING_DEFERRED_REGISTER = DeferredRegister.create(BUILDING_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<PaletteRE>> PALETTE_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "palettes"));
+    public static final RegistryKey<Registry<PaletteRE>> PALETTE_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "palettes"));
     public static final DeferredRegister<PaletteRE> PALETTE_DEFERRED_REGISTER = DeferredRegister.create(PALETTE_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<BuildingPartRE>> PART_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "parts"));
+    public static final RegistryKey<Registry<BuildingPartRE>> PART_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "parts"));
     public static final DeferredRegister<BuildingPartRE> PART_DEFERRED_REGISTER = DeferredRegister.create(PART_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<StyleRE>> STYLE_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "styles"));
+    public static final RegistryKey<Registry<StyleRE>> STYLE_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "styles"));
     public static final DeferredRegister<StyleRE> STYLE_DEFERRED_REGISTER = DeferredRegister.create(STYLE_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<ConditionRE>> CONDITIONS_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "conditions"));
+    public static final RegistryKey<Registry<ConditionRE>> CONDITIONS_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "conditions"));
     public static final DeferredRegister<ConditionRE> CONDITIONS_DEFERRED_REGISTER = DeferredRegister.create(CONDITIONS_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<CityStyleRE>> CITYSTYLES_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "citystyles"));
+    public static final RegistryKey<Registry<CityStyleRE>> CITYSTYLES_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "citystyles"));
     public static final DeferredRegister<CityStyleRE> CITYSTYLES_DEFERRED_REGISTER = DeferredRegister.create(CITYSTYLES_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<MultiBuildingRE>> MULTIBUILDINGS_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "multibuildings"));
+    public static final RegistryKey<Registry<MultiBuildingRE>> MULTIBUILDINGS_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "multibuildings"));
     public static final DeferredRegister<MultiBuildingRE> MULTIBUILDINGS_DEFERRED_REGISTER = DeferredRegister.create(MULTIBUILDINGS_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<VariantRE>> VARIANTS_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "variants"));
+    public static final RegistryKey<Registry<VariantRE>> VARIANTS_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "variants"));
     public static final DeferredRegister<VariantRE> VARIANTS_DEFERRED_REGISTER = DeferredRegister.create(VARIANTS_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<WorldStyleRE>> WORLDSTYLES_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "worldstyles"));
+    public static final RegistryKey<Registry<WorldStyleRE>> WORLDSTYLES_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "worldstyles"));
     public static final DeferredRegister<WorldStyleRE> WORLDSTYLES_DEFERRED_REGISTER = DeferredRegister.create(WORLDSTYLES_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<PredefinedCityRE>> PREDEFINEDCITIES_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "predefinedcites"));
+    public static final RegistryKey<Registry<PredefinedCityRE>> PREDEFINEDCITIES_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "predefinedcites"));
     public static final DeferredRegister<PredefinedCityRE> PREDEFINEDCITIES_DEFERRED_REGISTER = DeferredRegister.create(PREDEFINEDCITIES_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<PredefinedSphereRE>> PREDEFINEDSPHERES_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "predefinedspheres"));
+    public static final RegistryKey<Registry<PredefinedSphereRE>> PREDEFINEDSPHERES_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "predefinedspheres"));
     public static final DeferredRegister<PredefinedSphereRE> PREDEFINEDSPHERES_DEFERRED_REGISTER = DeferredRegister.create(PREDEFINEDSPHERES_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<ScatteredRE>> SCATTERED_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "scattered"));
+    public static final RegistryKey<Registry<ScatteredRE>> SCATTERED_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "scattered"));
     public static final DeferredRegister<ScatteredRE> SCATTERED_DEFERRED_REGISTER = DeferredRegister.create(SCATTERED_REGISTRY_KEY, LostCities.MODID);
 
-    public static final ResourceKey<Registry<StuffSettingsRE>> STUFF_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostCities.MODID, "stuff"));
+    public static final RegistryKey<Registry<StuffSettingsRE>> STUFF_REGISTRY_KEY = RegistryKey.createRegistryKey(new Identifier(LostCities.MODID, "stuff"));
     public static final DeferredRegister<StuffSettingsRE> STUFF_DEFERRED_REGISTER = DeferredRegister.create(STUFF_REGISTRY_KEY, LostCities.MODID);
 
     public static void init(IEventBus bus) {

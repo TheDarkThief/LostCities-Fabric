@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import mcjty.lostcities.LostCities;
-import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistryKeys;
+import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import mcjty.lostcities.worldgen.lost.cityassets.Building;
 import mcjty.lostcities.worldgen.lost.cityassets.BuildingPart;
 import net.minecraft.server.command.ServerCommandSource;
@@ -27,6 +27,7 @@ public class ModCommandManager {
                         .then(CommandSaveProfile.register(dispatcher))
                         .then(CommandCreatePart.register(dispatcher))
                         .then(CommandLocatePart.register(dispatcher))
+                        .then(CommandLocate.register(dispatcher))
                         .then(CommandEditPart.register(dispatcher))
                         .then(CommandResumeEdit.register(dispatcher))
                         .then(CommandListParts.register(dispatcher))
@@ -41,16 +42,16 @@ public class ModCommandManager {
     @NotNull
     static SuggestionProvider<ServerCommandSource> getPartSuggestionProvider() {
         return (context, builder) -> {
-            Stream<BuildingPart> stream = StreamSupport.stream(AssetRegistryKeys.PARTS.getIterable().spliterator(), false);
-            return CommandSource.suggest(stream.map(b -> b.getId().toString()), builder);
+            Stream<BuildingPart> stream = StreamSupport.stream(AssetRegistries.PARTS.getIterable().spliterator(), false);
+            return CommandSource.suggestMatching.map(b -> b.getId().toString()), builder);
         };
     }
 
     @NotNull
     static SuggestionProvider<ServerCommandSource> getBuildingSuggestionProvider() {
         return (context, builder) -> {
-            Stream<Building> stream = StreamSupport.stream(AssetRegistryKeys.BUILDINGS.getIterable().spliterator(), false);
-            return CommandSource.suggest(stream.map(b -> b.getId().toString()), builder);
+            Stream<Building> stream = StreamSupport.stream(AssetRegistries.BUILDINGS.getIterable().spliterator(), false);
+            return CommandSource.suggestMatching.map(b -> b.getId().toString()), builder);
         };
     }
 }

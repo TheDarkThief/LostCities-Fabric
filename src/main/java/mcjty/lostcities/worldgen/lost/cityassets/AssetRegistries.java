@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AssetRegistryKeys {
+public class AssetRegistries {
 
     public static final RegistryAssetRegistry<Variant, VariantRE> VARIANTS = new RegistryAssetRegistry<>(CustomRegistryKeys.VARIANTS_REGISTRY_KEY, Variant::new);
     public static final RegistryAssetRegistry<Condition, ConditionRE> CONDITIONS = new RegistryAssetRegistry<>(CustomRegistryKeys.CONDITIONS_REGISTRY_KEY, Condition::new);
@@ -21,7 +21,7 @@ public class AssetRegistryKeys {
     public static final RegistryAssetRegistry<MultiBuilding, MultiBuildingRE> MULTI_BUILDINGS = new RegistryAssetRegistry<>(CustomRegistryKeys.MULTIBUILDINGS_REGISTRY_KEY, MultiBuilding::new);
     public static final RegistryAssetRegistry<Style, StyleRE> STYLES = new RegistryAssetRegistry<>(CustomRegistryKeys.STYLE_REGISTRY_KEY, Style::new);
     public static final RegistryAssetRegistry<Palette, PaletteRE> PALETTES = new RegistryAssetRegistry<>(CustomRegistryKeys.PALETTE_REGISTRY_KEY, Palette::new);
-    public static final RegistryAssetRegistry<Scattered, ScatteredRE> SCATTERED = new RegistryAssetRegistry<>(CustomRegistryKeys.SCATTERED_REGISTRY_KEY, Scattered::new);
+    public static final RegistryAssetRegistry<ScatteredBuilding, ScatteredRE> SCATTERED = new RegistryAssetRegistry<>(CustomRegistryKeys.SCATTERED_REGISTRY_KEY, ScatteredBuilding::new);
     public static final RegistryAssetRegistry<PredefinedCity, PredefinedCityRE> PREDEFINED_CITIES = new RegistryAssetRegistry<>(CustomRegistryKeys.PREDEFINEDCITIES_REGISTRY_KEY, PredefinedCity::new);
     public static final RegistryAssetRegistry<PredefinedSphere, PredefinedSphereRE> PREDEFINED_SPHERES = new RegistryAssetRegistry<>(CustomRegistryKeys.PREDEFINEDSPHERES_REGISTRY_KEY, PredefinedSphere::new);
     public static final RegistryAssetRegistry<Stuff, StuffSettingsRE> STUFF = new RegistryAssetRegistry<>(CustomRegistryKeys.STUFF_REGISTRY_KEY, Stuff::new);
