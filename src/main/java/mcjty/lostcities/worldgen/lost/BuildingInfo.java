@@ -47,7 +47,7 @@ public class BuildingInfo implements ILostChunkInfo {
     public int groundLevel;
     public final int waterLevel;
 
-    public final boolean isCity;
+    public boolean isCity;
     public boolean hasBuilding;
     public final MultiPos multiBuildingPos;
     public final ILostCityMultiBuilding multiBuilding;
@@ -408,6 +408,12 @@ public class BuildingInfo implements ILostChunkInfo {
             CITY_INFO_MAP.put(coord, characteristics);
             return characteristics;
         }
+    }
+
+    // Change city status
+    public static void setCityRaw(ChunkCoord coord, IDimensionInfo provider, boolean isCity) {
+        LostChunkCharacteristics characteristics = getChunkCharacteristics(coord, provider);
+        characteristics.isCity = isCity;
     }
 
     /**
