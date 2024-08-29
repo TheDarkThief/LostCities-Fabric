@@ -20,6 +20,9 @@
 		],
 		"client": [
 			"mcjty.lostcites.LostCitiesClient"
+		],
+		"modmenu": [
+			"mcjty.lostcites.setup.ModMenuIntegration"
 		]
 	},
 	"mixins": [
