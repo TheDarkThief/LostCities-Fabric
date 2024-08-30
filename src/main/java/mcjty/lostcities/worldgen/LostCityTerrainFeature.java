@@ -53,6 +53,7 @@ import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.block.enums.RailShape;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.gen.noise.NoiseConfig;
@@ -79,7 +80,7 @@ public class LostCityTerrainFeature {
     public static final int FLOORHEIGHT = 6;
 
     private static int gSeed = 123456789;
-    private final BlockState air;
+    public final BlockState air;
     private final BlockState hardAir;
 
     private BlockState base = null;
@@ -110,7 +111,7 @@ public class LostCityTerrainFeature {
 
     public final IDimensionInfo provider;
     public final LostCityProfile profile;
-    private final Random rand;
+    public final Random rand;
 
     private final Map<ChunkCoord, ChunkHeightmap> cachedHeightmaps = new HashMap<>();
     private final Statistics statistics = new Statistics();
@@ -294,9 +295,13 @@ public class LostCityTerrainFeature {
 
         boolean doCity = info.isCity || (info.outsideChunk && info.hasBuilding);
 
-        // Check if there is no village here
-        boolean avoidChunk = hasBlacklistedStructure(region, chunkX, chunkZ);
-        doCity = doCity && !avoidChunk;
+        // Check if there is no village or other structure here
+        AvoidChunk avoidChunk = hasBlacklistedStructure(region, chunkX, chunkZ);
+        if (avoidChunk != AvoidChunk.NO) {
+            doCity = false;
+            info.isCity = false;
+            BuildingInfo.setCityRaw(coord, provider, false);
+        }
 
         // If this chunk has a building or street but we're in a floating profile and
         // we happen to have a void chunk we detect that here and go back to normal chunk generation
@@ -378,39 +383,55 @@ public class LostCityTerrainFeature {
         }
     }
 
-    private boolean hasBlacklistedStructure(ChunkRegion region, int chunkX, int chunkZ) {
-        boolean doAdjacent = Config.AVOID_VILLAGES_ADJACENT.get() || Config.AVOID_STRUCTURES_ADJACENT.get();
-        if (doAdjacent) {
-            for (int dx = -1 ; dx <= 1 ; dx++) {
-                for (int dz = -1 ; dz <= 1 ; dz++) {
-                    Chunk ch = region.getChunk(chunkX + dx, chunkZ + dx);
-                    if (testBlacklistedStructure(ch, chunkX == 0 && chunkZ == 0)) {
-                        return true;
-                    }
-                }
-
-            }
-        } else {
-            Chunk ch = region.getChunk(chunkX, chunkZ);
-            return testBlacklistedStructure(ch, true);
-        }
-        return false;
+    public enum AvoidChunk {
+        NO,
+        YES,
+        ADJACENT
     }
 
-    private boolean testBlacklistedStructure(Chunk ch, boolean center) {
+    private static AvoidChunk hasBlacklistedStructure(StructureWorldAccess level, int chunkX, int chunkZ) {
+        boolean doAdjacent = Config.AVOID_VILLAGES_ADJACENT || Config.AVOID_STRUCTURES_ADJACENT;
+        if (doAdjacent) {
+            boolean couldBeUnknown = false;
+            for (int dx = -1 ; dx <= 1 ; dx++) {
+                for (int dz = -1 ; dz <= 1 ; dz++) {
+                    if (level.hasChunk(chunkX + dx, chunkZ + dz)) {
+                        Chunk ch = level.getChunk(chunkX + dx, chunkZ + dx, ChunkStatus.STRUCTURE_REFERENCES);
+                        if (testBlacklistedStructure(level, ch, chunkX == 0 && chunkZ == 0)) {
+                            return (dx == 0 && dz == 0) ? AvoidChunk.YES : AvoidChunk.ADJACENT;
+                        }
+                    } else {
+                        couldBeUnknown = true;
+                    }
+                }
+                if (couldBeUnknown) {
+                    return AvoidChunk.NO;  // If we have unknown chunks we assume it is ok
+                }
+            }
+        } else {
+            if (level.hasChunk(chunkX, chunkZ)) {
+                Chunk ch = level.getChunk(chunkX, chunkZ, ChunkStatus.STRUCTURE_REFERENCES);
+                return testBlacklistedStructure(level, ch, true) ? AvoidChunk.YES : AvoidChunk.NO;
+            } else {
+                return AvoidChunk.NO; // If we have unknown chunks we assume it is ok
+            }
+        }
+        return AvoidChunk.NO;
+    }
+
+    private static boolean testBlacklistedStructure(StructureWorldAccess level, Chunk ch, boolean center) {
         if (ch.hasStructureReferences()) {
-            var structures = provider.getWorld().getRegistryManager().get(RegistryKeys.STRUCTURE);
+            var structures = level.getRegistryManager().get(RegistryKeys.STRUCTURE);
             var references = ch.getStructureReferences();
-            // @todo we can do this more optimally if we first find all configured structures for village
             for (var entry : references.entrySet()) {
                 if (!entry.getValue().isEmpty()) {
                     Optional<RegistryKey<Structure>> key = structures.getKey(entry.getKey());
-                    if (center || Config.AVOID_VILLAGES_ADJACENT.get()) {
+                    if (center || Config.AVOID_VILLAGES_ADJACENT) {
                         if (key.map(k -> structures.get(k).isIn(StructureTags.VILLAGE)).orElse(false)) {
                             return true;
                         }
                     }
-                    if (center || Config.AVOID_STRUCTURES_ADJACENT.get()) {
+                    if (center || Config.AVOID_STRUCTURES_ADJACENT) {
                         if (Config.isAvoidedStructure(key.get().getValue())) {
                             return true;
                         }
@@ -449,15 +470,15 @@ public class LostCityTerrainFeature {
         info.clearTorchTodo();
     }
 
-    private void doNormalChunk(BuildingInfo info, ChunkHeightmap heightmap, boolean avoidChunk) {
+    private void doNormalChunk(BuildingInfo info, ChunkHeightmap heightmap, AvoidChunk avoidChunk) {
 //        debugClearChunk(chunkX, chunkZ, primer);
-        if ((!avoidChunk || !Config.AVOID_FLATTENING.get()) && (profile.isDefault() || profile.isSpheres())) {
+        if ((avoidChunk != AvoidChunk.YES || !Config.AVOID_FLATTENING) && (profile.isDefault() || profile.isSpheres())) {
             correctTerrainShape(provider.getWorld(), info.coord, heightmap);
 //            flattenChunkToCityBorder(chunkX, chunkZ);
         }
 
-        int chunkX = info.chunkX;
-        int chunkZ = info.chunkZ;
+        int chunkX = info.coord.chunkX();
+        int chunkZ = info.coord.chunkZ();
         LostCityEvent.PostGenOutsideChunkEvent postevent = new LostCityEvent.PostGenOutsideChunkEvent(provider.getWorld(), LostCities.lostCitiesImp, chunkX, chunkZ, driver.getPrimer());
         MinecraftForge.EVENT_BUS.post(postevent);
 
@@ -466,15 +487,15 @@ public class LostCityTerrainFeature {
 
         ScatteredSettings scatteredSettings = provider.getWorldStyle().getScatteredSettings();
         if (scatteredSettings != null) {
-            if (!mcjty.lostcities.worldgen.gen.Scattered.avoidScattered(this, info)) {
-                mcjty.lostcities.worldgen.gen.Scattered.generateScattered(this, info, scatteredSettings, heightmap);
+            if (!Scattered.avoidScattered(this, info)) {
+                Scattered.generateScattered(this, info, scatteredSettings, heightmap);
             }
         }
     }
 
     private void breakBlocksForDamageNew(int chunkX, int chunkZ, BuildingInfo info) {
-        int cx = chunkX * 16;
-        int cz = chunkZ * 16;
+        int cx = chunkX << 4;
+        int cz = chunkZ << 4;
 
         DamageArea damageArea = info.getDamageArea();
 
@@ -488,8 +509,6 @@ public class LostCityTerrainFeature {
             boolean hasExplosions = damageArea.hasExplosions(yy);
             for (int y = 0; y < 16; y++) {
                 if (hasExplosions) {
-                    int cntDamaged = 0;
-                    int cntAir = 0;
                     int cury = yy * 16 + y;
                     for (int x = 0; x < 16; x++) {
                         driver.current(x, cury, 0);
@@ -810,9 +829,6 @@ public class LostCityTerrainFeature {
      * This function returns the height at a given point in this chunk
      * If the point is at a border and the adjacent chunk at that point happens to be lower
      * then this will return the minimum height
-     *
-     * @param info
-     * @return
      */
     public int getMinHeightAt(BuildingInfo info, int x, int z, ChunkHeightmap heightmap) {
         int height = heightmap.getHeight();
@@ -871,7 +887,7 @@ public class LostCityTerrainFeature {
         boolean building = info.hasBuilding;
 
         if (info.profile.isDefault() || info.profile.isSpheres()) {
-            int minHeight = info.minBuildHeight;
+            int minHeight = info.provider.getWorld().getBottomY();
             BlockState bedrock = Blocks.BEDROCK.getDefaultState();
             for (int x = 0; x < 16; ++x) {
                 for (int z = 0; z < 16; ++z) {
@@ -903,8 +919,8 @@ public class LostCityTerrainFeature {
             }
         }
 
-        int chunkX = info.chunkX;
-        int chunkZ = info.chunkZ;
+        int chunkX = info.coord.chunkX();
+        int chunkZ = info.coord.chunkZ();
         LostCityEvent.PreGenCityChunkEvent event = new LostCityEvent.PreGenCityChunkEvent(provider.getWorld(), LostCities.lostCitiesImp, chunkX, chunkZ, driver.getPrimer());
         if (!MinecraftForge.EVENT_BUS.post(event)) {
             if (building) {
@@ -938,89 +954,7 @@ public class LostCityTerrainFeature {
             }
         }
 
-        generateStuff(info);
-    }
-
-    private void generateStuff(BuildingInfo info) {
-        rand.setSeed(info.coord.chunkX() * 2570174657L + info.coord.chunkZ() * 101754695981L);
-        BiomeInfo biome = BiomeInfo.getBiomeInfo(provider, info.coord);
-        CompiledPalette palette = info.getCompiledPalette();
-        for (String tag : info.getCityStyle().getStuffTags()) {
-            List<Stuff> stuffs = AssetRegistries.STUFF_BY_TAG.get(tag);
-            if (stuffs != null) {
-                for (Stuff stuff : stuffs) {
-                    StuffSettingsRE settings = stuff.getSettings();
-                    Boolean inBuilding = settings.isInBuilding();
-                    if (inBuilding != null && inBuilding == info.hasBuilding) {
-                        IdentifierMatcher buildingMatcher = settings.getBuildingMatcher();
-                        if (buildingMatcher.isAny() || buildingMatcher.test(info.buildingType.getId())) {
-                            if (settings.getBiomeMatcher().test(biome.getMainBiome())) {
-                                actuallyGenerateStuff(info, settings, palette, inBuilding == Boolean.TRUE);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean testBlock(BlockMatcher matcher, int x, int y, int z) {
-        if (matcher.isAny()) {
-            return true;
-        }
-        return matcher.test(driver.getBlock(x, y, z));
-    }
-
-    private void actuallyGenerateStuff(BuildingInfo info, StuffSettingsRE settings, CompiledPalette palette, boolean inBuilding) {
-        StructureWorldAccess level = info.provider.getWorld();
-        int attempts = settings.getAttempts();
-        Integer minheight = settings.getMinheight();
-        Integer maxheight = settings.getMaxheight();
-        if (minheight == null) {
-            minheight = info.groundLevel;
-            if (inBuilding && info.hasBuilding) {
-                int lowestLevel = info.getCityGroundLevel() - info.cellars * FLOORHEIGHT;
-                minheight = lowestLevel;
-            }
-        }
-        if (maxheight == null) {
-            maxheight = minheight + 20;
-            if (inBuilding && info.hasBuilding) {
-                maxheight = info.getCityGroundLevel() + info.getNumFloors() * FLOORHEIGHT + 10; // 10 margine above highest floor
-            }
-        }
-        int mincount = settings.getMincount();
-        int maxcount = settings.getMaxcount();
-        int count = rand.nextInt(maxcount - mincount) + mincount;
-        for (int j = 0; j < count; j++) {
-            for (int i = 0; i < attempts; i++) {
-                int x = rand.nextInt(16);
-                int y = rand.nextInt(maxheight - minheight) + minheight;
-                int z = rand.nextInt(16);
-                String blocks = settings.getColumn();
-                if (testBlock(settings.getBlockMatcher(), x, y-1, z) && testBlock(settings.getUpperBlockMatcher(), x, y + blocks.length(), z)) {
-                    Boolean isSeesky = settings.isSeesky();
-                    if (isSeesky == null || isSeesky == level.isSkyVisible(new BlockPos(info.coord.chunkX() * 16 + x, y, info.coord.chunkZ() * 16 + z))) {
-                        // Iterate over all characters of the block
-                        boolean ok = true;
-                        for (int k = 0; k < blocks.length(); k++) {
-                            if (driver.getBlock(x, y + k, z) != air) {
-                                ok = false;
-                                break;
-                            }
-                        }
-                        if (ok) {
-                            driver.current(x, y, z);
-                            for (int k = 0; k < blocks.length(); k++) {
-                                BlockState block = palette.get(blocks.charAt(k));
-                                driver.add(block);
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        Stuff.generateStuff(this, info);
     }
 
     private void generateStreetDecorations(BuildingInfo info) {
@@ -1095,10 +1029,10 @@ public class LostCityTerrainFeature {
     }
 
     private void generateRubble(BuildingInfo info) {
-        int chunkX = info.chunkX;
-        int chunkZ = info.chunkZ;
-        this.rubbleBuffer = this.rubbleNoise.getRegion(this.rubbleBuffer, (chunkX * 16), (chunkZ * 16), 16, 16, 1.0 / 16.0, 1.0 / 16.0, 1.0D);
-        this.leavesBuffer = this.leavesNoise.getRegion(this.leavesBuffer, (chunkX * 64), (chunkZ * 64), 16, 16, 1.0 / 64.0, 1.0 / 64.0, 4.0D);
+        int chunkX = info.coord.chunkX();
+        int chunkZ = info.coord.chunkZ();
+        this.rubbleBuffer = this.rubbleNoise.getRegion(this.rubbleBuffer, (chunkX << 4), (chunkZ << 4), 16, 16, 1.0 / 16.0, 1.0 / 16.0, 1.0D);
+        this.leavesBuffer = this.leavesNoise.getRegion(this.leavesBuffer, (chunkX << 6), (chunkZ << 6), 16, 16, 1.0 / 64.0, 1.0 / 64.0, 4.0D);
 
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
@@ -1179,13 +1113,13 @@ public class LostCityTerrainFeature {
             return;
         }
 
-        int chunkX = info.chunkX;
-        int chunkZ = info.chunkZ;
+        int chunkX = info.coord.chunkX();
+        int chunkZ = info.coord.chunkZ();
         double d0 = 0.03125D;
-        this.ruinBuffer = this.ruinNoise.getRegion(this.ruinBuffer, (chunkX * 16), (chunkZ * 16), 16, 16, d0 * 2.0D, d0 * 2.0D, 1.0D);
+        this.ruinBuffer = this.ruinNoise.getRegion(this.ruinBuffer, (chunkX << 4), (chunkZ << 4), 16, 16, d0 * 2.0D, d0 * 2.0D, 1.0D);
         boolean doLeaves = info.profile.RUBBLELAYER;
         if (doLeaves) {
-            this.leavesBuffer = this.leavesNoise.getRegion(this.leavesBuffer, (chunkX * 64), (chunkZ * 64), 16, 16, 1.0 / 64.0, 1.0 / 64.0, 4.0D);
+            this.leavesBuffer = this.leavesNoise.getRegion(this.leavesBuffer, (chunkX << 6), (chunkZ << 6), 16, 16, 1.0 / 64.0, 1.0 / 64.0, 4.0D);
         }
 
         int baseheight = (int) (info.getCityGroundLevel() + 1 + (info.ruinHeight * info.getNumFloors() * FLOORHEIGHT));
@@ -1199,6 +1133,7 @@ public class LostCityTerrainFeature {
         Predicate<BlockState> checkIronbars = infobarsChar == null ? s -> s == ironbarsState : infoBarSet::contains;
         Character rubbleBlock = info.getBuilding().getRubbleBlock();
 
+        int maxBuildHeight = info.provider.getWorld().getTopY();
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
                 double v = ruinBuffer[x + z * 16];
@@ -1206,8 +1141,8 @@ public class LostCityTerrainFeature {
                 int height = baseheight + (int) v;
                 driver.current(x, height, z);
                 height = info.getMaxHeight() + 10 - height;
-                if (height > info.maxBuildHeight - 2) {
-                    height = info.maxBuildHeight - 2;
+                if (height > maxBuildHeight - 2) {
+                    height = maxBuildHeight - 2;
                 }
                 int vl = 0;
                 if (doLeaves) {
@@ -1350,7 +1285,7 @@ public class LostCityTerrainFeature {
      */
     private void fillToBedrockStreetBlock(BuildingInfo info) {
         // Base blocks below streets
-        int minHeight = info.minBuildHeight;
+        int minHeight = info.provider.getWorld().getBottomY();
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
                 int y = info.getCityGroundLevel() - 1;
@@ -1478,7 +1413,7 @@ public class LostCityTerrainFeature {
     private static final java.util.Random VEGETATION_RAND = new java.util.Random();
 
     private void generateRandomVegetation(BuildingInfo info, int height) {
-        VEGETATION_RAND.setSeed(provider.getSeed() * 377 + info.chunkZ * 341873128712L + info.chunkX * 132897987541L);
+        VEGETATION_RAND.setSeed(provider.getSeed() * 377 + info.coord.chunkZ() * 341873128712L + info.coord.chunkX() * 132897987541L);
 
         if (info.getXmin().hasBuilding) {
             for (int x = 0; x < info.profile.THICKNESS_OF_RANDOM_LEAFBLOCKS; x++) {
@@ -1840,7 +1775,7 @@ public class LostCityTerrainFeature {
     }
 
     private BlockState handleBlockEntity(BuildingInfo info, int oy, StructureWorldAccess world, int rx, int rz, int y, BlockState b, Palette.Info inf) {
-        BlockPos pos = new BlockPos(info.chunkX * 16 + rx, oy + y, info.chunkZ * 16 + rz);
+        BlockPos pos = info.getRelativePos(rx, oy + y, rz);
         BlockEntityType type = getTypeForBlock(b);
         if (type == null) {
             ModSetup.getLogger().warn("Error getting type for block: " + b.getBlock());
@@ -1864,7 +1799,7 @@ public class LostCityTerrainFeature {
     private BlockState handleSpawner(BuildingInfo info, IBuildingPart part, int oy, StructureWorldAccess world, int rx, int rz, int y, BlockState b, Palette.Info inf) {
         if (info.profile.GENERATE_SPAWNERS && !info.noLoot) {
             String mobid = inf.mobId();
-            BlockPos pos = new BlockPos(info.chunkX * 16 + rx, oy + y, info.chunkZ * 16 + rz);
+            BlockPos pos = info.getRelativePos(rx, oy + y, rz);
             NbtCompound tag = new NbtCompound();
             tag.putInt("x", pos.getX());
             tag.putInt("y", pos.getY());
@@ -1902,10 +1837,10 @@ public class LostCityTerrainFeature {
             if (info.profile.AVOID_FOLIAGE) {
                 b = air;
             } else {
-                BlockPos pos = new BlockPos(info.chunkX * 16 + rx, oy + y, info.chunkZ * 16 + rz);
+                BlockPos pos = info.getRelativePos(rx, oy + y, rz);
                 if (block instanceof SaplingBlock saplingBlock) {
                     BlockState finalB = b;
-                    if (Config.FORCE_SAPLING_GROWTH.get()) {
+                    if (Config.FORCE_SAPLING_GROWTH) {
                         Random forkedRand = rand.split();
                         GlobalTodo.get(world.toServerWorld()).addTodo(pos, (level) -> {
                             if (level.isChunkLoaded(pos) && level.getBlockState(pos).getBlock() instanceof SaplingBlock) {
@@ -1951,7 +1886,7 @@ public class LostCityTerrainFeature {
         int level = (pos.getY() - diminfo.getProfile().GROUNDLEVEL) / FLOORHEIGHT;
         int floor = (pos.getY() - info.getCityGroundLevel()) / FLOORHEIGHT;
         ConditionContext conditionContext = new ConditionContext(level, floor, info.cellars, info.getNumFloors(),
-                todo.getPart(), todo.getBuilding(), info.chunkX, info.chunkZ) {
+                todo.getPart(), todo.getBuilding(), info.coord) {
             @Override
             public boolean isSphere() {
                 return CitySphere.isInSphere(info.coord, pos, diminfo);
@@ -1992,7 +1927,7 @@ public class LostCityTerrainFeature {
                 int level = (pos.getY() - diminfo.getProfile().GROUNDLEVEL) / FLOORHEIGHT;
                 int floor = (pos.getY() - info.getCityGroundLevel()) / FLOORHEIGHT;
                 ConditionContext conditionContext = new ConditionContext(level, floor, info.cellars, info.getNumFloors(),
-                        todo.getPart(), todo.getBuilding(), info.chunkX, info.chunkZ) {
+                        todo.getPart(), todo.getBuilding(), info.coord) {
                     @Override
                     public boolean isSphere() {
                         return CitySphere.isInSphere(info.coord, pos, diminfo);
@@ -2043,8 +1978,10 @@ public class LostCityTerrainFeature {
                 // How many go this direction (approx, based on cardinal directions from building as well as number that simply fall down)
                 destroyedBlocks /= info.profile.DEBRIS_TO_NEARBYCHUNK_FACTOR;
                 int h = adjacentInfo.getMaxHeight() + 10;
-                if (h > info.maxBuildHeight - 1) {
-                    h = info.minBuildHeight - 1;
+                int maxBuildHeight = info.provider.getWorld().getTopY();
+                if (h > maxBuildHeight - 1) {
+                    int minBuildHeight = info.provider.getWorld().getBottomY();
+                    h = minBuildHeight - 1;
                 }
 
                 CompiledPalette palette = info.getCompiledPalette();
@@ -2122,8 +2059,8 @@ public class LostCityTerrainFeature {
     }
 
     private void generateBuilding(BuildingInfo info, ChunkHeightmap heightmap) {
-        int min = info.minBuildHeight + 2;
-        int max = info.maxBuildHeight - 2 - FLOORHEIGHT;
+        int min = info.provider.getWorld().getBottomY() + 2;
+        int max = info.provider.getWorld().getTopY() - 2 - FLOORHEIGHT;
 
         int cellars = info.cellars;
         int floors = info.getNumFloors();
@@ -2205,12 +2142,14 @@ public class LostCityTerrainFeature {
             // For floating worldgen we try to fit the underside of the building better with the island
             // We also remove all blocks from the inside because we generate buildings on top of
             // generated chunks as opposed to blank chunks with non-floating worlds
-            this.bottomLayerBuffer = this.bottomLayerNoise.getRegion(this.bottomLayerBuffer, (info.chunkX * 16), (info.chunkZ * 16), 16, 16, 8.0 / 16.0, 8.0 / 16.0, 1.0D);
+            this.bottomLayerBuffer = this.bottomLayerNoise.getRegion(this.bottomLayerBuffer, (info.coord.chunkX() << 4), (info.coord.chunkZ() << 4), 16, 16, 8.0 / 16.0, 8.0 / 16.0, 1.0D);
+            int minBuildHeight = info.provider.getWorld().getBottomY();
+            int maxBuildHeight = info.provider.getWorld().getTopY();
             for (int x = 0; x < 16; ++x) {
                 for (int z = 0; z < 16; ++z) {
                     double vr = bottomLayerBuffer[x + z * 16] / 4.0f;
-                    driver.current(x, info.maxBuildHeight - 1, z);
-                    int minHeight = info.minBuildHeight;
+                    driver.current(x, maxBuildHeight - 1, z);
+                    int minHeight = minBuildHeight;
                     int lowestToFill = Math.max(minHeight, lowestLevel - 6 - (int) vr);
                     while (driver.getBlock() == air && driver.getY() > lowestToFill) {
                         driver.decY();

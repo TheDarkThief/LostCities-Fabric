@@ -500,7 +500,7 @@ public class GuiLCConfig extends Screen {
                 if (widget.isMouseOver(mouseX, mouseY) && widget.visible) {
                     Tooltip tooltip = widget.getTooltip();
                     if (tooltip != null) {
-                        setTooltipForNextRenderPass(tooltip.toCharSequence(this.minecraft));
+                        setTooltipForNextRenderPass(tooltip.getLines(MinecraftClient.getInstance()));
                     }
                     break;
                 }

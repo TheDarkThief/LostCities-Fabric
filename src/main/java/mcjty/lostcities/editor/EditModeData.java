@@ -27,7 +27,7 @@ public class EditModeData extends PersistentState {
 
     public static final String NAME = "LostCityEditData";
 
-    public static record PartData(String partName, int y) { }
+    public record PartData(String partName, int y) { }
     private final Map<ChunkCoord, List<PartData>> partData = new HashMap<>();
 
 

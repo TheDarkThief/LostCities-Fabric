@@ -62,11 +62,12 @@ public class ScatteredBuilding implements ILostCityAsset {
         return name;
     }
 
-    public static enum TerrainHeight implements StringIdentifiable {
+    public enum TerrainHeight implements StringIdentifiable {
         LOWEST("lowest"),
         AVERAGE("average"),
         HIGHEST("highest"),
-        OCEAN("ocean")
+        OCEAN("ocean"),
+        HIGHWAY("highway")
         ;
 
         private static final Map<String, TerrainHeight> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(TerrainHeight::asString, (v) -> v));
@@ -92,7 +93,7 @@ public class ScatteredBuilding implements ILostCityAsset {
         }
     }
 
-    public static enum TerrainFix implements StringIdentifiable {
+    public enum TerrainFix implements StringIdentifiable {
         NONE("none"),               // Do nothing with the terrain
         CLEAR("clear"),             // Clear from generation point upwards
         REPEATSLICE("repeatslice")  // Repeat the bottom slice downwards until it hits a solid block

@@ -46,19 +46,15 @@ import static mcjty.lostcities.worldgen.LostCityTerrainFeature.FLOORHEIGHT;
 
 public class BuildingInfo implements ILostChunkInfo {
 
-    public final int chunkX;
-    public final int chunkZ;
     public final ChunkCoord coord;
     public final IDimensionInfo provider;
     public final LostCityProfile profile;       // Profile cactive for this chunk: can be different in city sphere worlds
-    public final int minBuildHeight;
-    public final int maxBuildHeight;
 
     public final boolean outsideChunk;  // Only used for citysphere worlds and when this chunk is outside
     public int groundLevel;
     public final int waterLevel;
 
-    public final boolean isCity;
+    public boolean isCity;
     public boolean hasBuilding;
     public final MultiPos multiBuildingPos;
     public final ILostCityMultiBuilding multiBuilding;
@@ -182,6 +178,14 @@ public class BuildingInfo implements ILostChunkInfo {
         postTodo.clear();
     }
 
+    public BlockPos getCenter(int y) {
+        return new BlockPos((coord.chunkX() << 4) + 8, y, (coord.chunkZ() << 4) + 8);
+    }
+
+    public BlockPos getRelativePos(int rx, int y, int rz) {
+        return new BlockPos((coord.chunkX() << 4) + rx, y, (coord.chunkZ() << 4) + rz);
+    }
+
     public CompiledPalette getCompiledPalette() {
         if (compiledPalette == null) {
             compiledPalette = new CompiledPalette(palette);
@@ -197,7 +201,7 @@ public class BuildingInfo implements ILostChunkInfo {
 
     public DamageArea getDamageArea() {
         if (damageArea == null) {
-            damageArea = new DamageArea(chunkX, chunkZ, provider, this);
+            damageArea = new DamageArea(coord.chunkX(), coord.chunkZ(), provider, this);
         }
         return damageArea;
     }
@@ -334,8 +338,7 @@ public class BuildingInfo implements ILostChunkInfo {
             if (!characteristics.isCity) {
                 characteristics.multiPos = MultiPos.SINGLE;
                 characteristics.multiBuilding = null;
-            }
-            else {
+            } else {
                 initMultiBuildingSection(characteristics, coord, provider, profile);
             }
 
@@ -419,6 +422,12 @@ public class BuildingInfo implements ILostChunkInfo {
             CITY_INFO_MAP.put(coord, characteristics);
             return characteristics;
         }
+    }
+
+    // Change city status
+    public static void setCityRaw(ChunkCoord coord, IDimensionInfo provider, boolean isCity) {
+        LostChunkCharacteristics characteristics = getChunkCharacteristics(coord, provider);
+        characteristics.isCity = isCity;
     }
 
     /**
@@ -630,11 +639,10 @@ public class BuildingInfo implements ILostChunkInfo {
         floorTypes = new BuildingPart[floors + cellars + 1];
         floorTypes2 = new BuildingPart[floors + cellars + 1];
 
-        Random rand = getBuildingRandom(chunkX, chunkZ, provider.getSeed());
+        Random rand = getBuildingRandom(coord.chunkX(), coord.chunkZ(), provider.getSeed());
 
         for (int i = 0; i <= floors + cellars; i++) {
-            ConditionContext conditionContext = new ConditionContext(cityLevel + i - cellars, i - cellars, cellars, floors, "<none>", building.getName(),
-                    chunkX, chunkZ) {
+            ConditionContext conditionContext = new ConditionContext(cityLevel + i - cellars, i - cellars, cellars, floors, "<none>", building.getName(), coord) {
                 @Override
                 public boolean isBuilding() {
                     return true;
@@ -642,14 +650,13 @@ public class BuildingInfo implements ILostChunkInfo {
 
                 @Override
                 public boolean isSphere() {
-                    return CitySphere.isInSphere(coord, new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8), provider);
+                    return CitySphere.isInSphere(coord, getCenter(0), provider);
                 }
 
                 @Override
                 public Identifier getBiome() {
-                    RegistryEntry<Biome> biome = provider.getWorld().getBiome(new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
-                    //return biome.getKeyOrValue().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().get(RegistryKeys.BIOME).getDefaultEntry().orElseThrow().getKey(b));
-                    return biome.getKeyOrValue().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().getOptional(RegistryKeys.BIOME).orElseThrow().get(b));
+                    RegistryEntry<Biome> biome = provider.getWorld().getBiome(getCenter(0));
+                    return biome.getKeyOrValue().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().get(RegistryKeys.BIOME).getDefaultEntry().orElseThrow().getKey(b));
 
                 }
             };
@@ -662,10 +669,6 @@ public class BuildingInfo implements ILostChunkInfo {
 
     private BuildingInfo(ChunkCoord key, IDimensionInfo provider) {
         this.provider = provider;
-        this.minBuildHeight = provider.getWorld().getBottomY();
-        this.maxBuildHeight = provider.getWorld().getTopY();
-        this.chunkX = key.chunkX();
-        this.chunkZ = key.chunkZ();
         this.coord = key;
 
         outsideChunk = (provider.getProfile().isSpace() || provider.getProfile().isSpheres()) && !CitySphere.intersectsWithCitySphere(key, provider);
@@ -678,7 +681,7 @@ public class BuildingInfo implements ILostChunkInfo {
         multiBuilding = characteristics.multiBuilding;
         multiBuildingPos = characteristics.multiPos;
 
-        Random rand = getBuildingRandom(chunkX, chunkZ, provider.getSeed());
+        Random rand = getBuildingRandom(coord.chunkX(), coord.chunkZ(), provider.getSeed());
 
         boolean b = characteristics.couldHaveBuilding;
         if (b && multiBuildingPos.isSingle()) {
@@ -787,7 +790,7 @@ public class BuildingInfo implements ILostChunkInfo {
                 }
             }
 
-            int max = maxBuildHeight - 2 - FLOORHEIGHT;
+            int max = provider.getWorld().getTopY() - 2 - FLOORHEIGHT;
             while (getCityGroundLevel() + f * FLOORHEIGHT >= max) {
                 f--;
             }
@@ -830,8 +833,7 @@ public class BuildingInfo implements ILostChunkInfo {
         connectionAtZ = new boolean[floors + cellars + 1];
         Building building = (Building) getBuilding();
         for (int i = 0; i <= floors + cellars; i++) {
-            ConditionContext conditionContext = new ConditionContext(cityLevel + i - cellars, i - cellars, cellars, floors, "<none>", building.getName(),
-                    chunkX, chunkZ) {
+            ConditionContext conditionContext = new ConditionContext(cityLevel + i - cellars, i - cellars, cellars, floors, "<none>", building.getName(), coord) {
                 @Override
                 public boolean isBuilding() {
                     return true;
@@ -839,12 +841,12 @@ public class BuildingInfo implements ILostChunkInfo {
 
                 @Override
                 public boolean isSphere() {
-                    return CitySphere.isInSphere(coord, new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8), provider);
+                    return CitySphere.isInSphere(coord, getCenter(0), provider);
                 }
 
                 @Override
                 public Identifier getBiome() {
-                    RegistryEntry<Biome> biome = provider.getWorld().getBiome(new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
+                    RegistryEntry<Biome> biome = provider.getWorld().getBiome(getCenter(0));
                     //return biome.unwrap().map(RegistryKey::getValue, b -> provider.getWorld().registryAccess().registry(RegistryKeys.BIOME).orElseThrow().getKey(b));
                     return biome.getKeyOrValue().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().getOptional(RegistryKeys.BIOME).orElseThrow().getKey(b));
                 }
@@ -1173,13 +1175,13 @@ public class BuildingInfo implements ILostChunkInfo {
         if (!isSuitableForBridge(provider, this)) {
             return null;
         }
-        if (chunkZ % 2 != 0 && (getZmin().hasXBridge(provider) != null || getZmax().hasXBridge(provider) != null)) {
+        if (coord.chunkZ() % 2 != 0 && (getZmin().hasXBridge(provider) != null || getZmax().hasXBridge(provider) != null)) {
             return null;
         }
         BuildingPart bt = bridgeType;
         BuildingInfo i = getXmin();
         while ((!i.isCity) && i.xBridge && isSuitableForBridge(provider, i)) {
-            if (chunkZ % 2 != 0 && (i.getZmin().hasXBridge(provider) != null || i.getZmax().hasXBridge(provider) != null)) {
+            if (coord.chunkZ() % 2 != 0 && (i.getZmin().hasXBridge(provider) != null || i.getZmax().hasXBridge(provider) != null)) {
                 return null;
             }
             bt = i.bridgeType;
@@ -1193,7 +1195,7 @@ public class BuildingInfo implements ILostChunkInfo {
 
         i = getXmax();
         while ((!i.isCity) && i.xBridge && isSuitableForBridge(provider, i)) {
-            if (chunkZ % 2 != 0 && (i.getZmin().hasXBridge(provider) != null || i.getZmax().hasXBridge(provider) != null)) {
+            if (coord.chunkZ() % 2 != 0 && (i.getZmin().hasXBridge(provider) != null || i.getZmax().hasXBridge(provider) != null)) {
                 return null;
             }
             i = i.getXmax();
@@ -1233,7 +1235,7 @@ public class BuildingInfo implements ILostChunkInfo {
             return null;
         }
 
-        if (chunkX % 2 != 0 && (getXmin().hasZBridge(provider) != null || getXmax().hasZBridge(provider) != null)) {
+        if (coord.chunkX() % 2 != 0 && (getXmin().hasZBridge(provider) != null || getXmax().hasZBridge(provider) != null)) {
             return null;
         }
 
@@ -1243,7 +1245,7 @@ public class BuildingInfo implements ILostChunkInfo {
             if (i.hasXBridge(provider) != null) {
                 return null;
             }
-            if (chunkX % 2 != 0 && (i.getXmin().hasZBridge(provider) != null || i.getXmax().hasZBridge(provider) != null)) {
+            if (coord.chunkX() % 2 != 0 && (i.getXmin().hasZBridge(provider) != null || i.getXmax().hasZBridge(provider) != null)) {
                 return null;
             }
 
@@ -1261,7 +1263,7 @@ public class BuildingInfo implements ILostChunkInfo {
             if (i.hasXBridge(provider) != null) {
                 return null;
             }
-            if (chunkX % 2 != 0 && (i.getXmin().hasZBridge(provider) != null || i.getXmax().hasZBridge(provider) != null)) {
+            if (coord.chunkX() % 2 != 0 && (i.getXmin().hasZBridge(provider) != null || i.getXmax().hasZBridge(provider) != null)) {
                 return null;
             }
             i = i.getZmax();
@@ -1572,8 +1574,8 @@ public class BuildingInfo implements ILostChunkInfo {
         if (desiredMaxHeight1 == null) {
             int h = getLowestCityHeightAtChunkCorner();
 
-            int cx = chunkX;
-            int cz = chunkZ;
+            int cx = coord.chunkX();
+            int cz = coord.chunkZ();
 
             // @todo build limit
             if (h < 256) {
@@ -1636,8 +1638,8 @@ public class BuildingInfo implements ILostChunkInfo {
                 return desiredTerrainCorrectionHeights;
             }
 
-            int cx = chunkX;
-            int cz = chunkZ;
+            int cx = coord.chunkX();
+            int cz = coord.chunkZ();
 
             MinMax minMax = new MinMax();
 
@@ -1726,7 +1728,7 @@ public class BuildingInfo implements ILostChunkInfo {
 
     @Override
     public float getDamage(int chunkY) {
-        return getDamageArea().getDamage(chunkX * 16 + 8, chunkY * 16 + 8, chunkZ * 16 + 8);
+        return getDamageArea().getDamage((coord.chunkX() << 4) + 8, (chunkY * 16) + 8, (coord.chunkZ() << 4) + 8);
     }
 
     @Override

@@ -20,7 +20,7 @@ import net.minecraft.world.gen.feature.FeatureConfig;
 
 public class Registration {
 
-    // public static final SimpleRegistry FEATURES = FabricRegistryBuilder.createSimple(RegistryKey.ofRegistry(Identifier.of(LostCities.MODID, "lostcity"))).buildAndRegister(); 
+    public static final SimpleRegistry FEATURES = FabricRegistryBuilder.createSimple(RegistryKey.ofRegistry(Identifier.of(LostCities.MODID, "lostcity"))).buildAndRegister(); 
 
     public static void init() {
         LostCities.LOGGER.info("SUP BITCHES");

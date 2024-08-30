@@ -230,7 +230,7 @@ public class Config {
                         .name(Text.literal("Avoid Structures adjacent"))
                         .description(OptionDescription.of(Text.literal("If true then also avoid generating the structures mentioned in 'avoidStructures' in chunks adjacent to the chunk with the structure")))
                         .binding(
-                            true, // the default value
+                            false, // the default value
                             () -> AVOID_STRUCTURES_ADJACENT, // a getter to get the current value from
                             newVal -> AVOID_STRUCTURES_ADJACENT = newVal) // setter
                         .controller(BooleanControllerBuilder::create)
@@ -240,7 +240,7 @@ public class Config {
                         .name(Text.literal("Avoid Villages adjacent"))
                         .description(OptionDescription.of(Text.literal("If true then also avoid generating cities in chunks adjacent to the chunks with villages")))
                         .binding(
-                            true, // the default value
+                            false, // the default value
                             () -> AVOID_VILLAGES_ADJACENT, // a getter to get the current value from
                             newVal -> AVOID_VILLAGES_ADJACENT = newVal) // setter
                         .controller(BooleanControllerBuilder::create)
@@ -303,10 +303,10 @@ public class Config {
         //         .defineList("avoidStructures", Lists.newArrayList(DEF_AVOID_STRUCTURES), s -> s instanceof String);
         // AVOID_STRUCTURES_ADJACENT = SERVER_BUILDER
         //         .comment("If true then also avoid generating the structures mentioned in 'avoidStructures' in chunks adjacent to the chunk with the structure")
-        //         .define("avoidStructuresAdjacent", true);
+        //         .define("avoidStructuresAdjacent", false);
         // AVOID_VILLAGES_ADJACENT = SERVER_BUILDER
         //         .comment("If true then also avoid generating cities in chunks adjacent to the chunks with villages")
-        //         .define("avoidVillagesAdjacent", true);
+        //         .define("avoidVillagesAdjacent", false);
         // AVOID_FLATTENING = SERVER_BUILDER
         //         .comment("If true then avoid flattening the terrain around the city in case there was a structure that was avoided")
         //         .define("avoidFlattening", true);

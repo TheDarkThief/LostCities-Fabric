@@ -43,7 +43,7 @@ public class GlobalTodo {
     }
 
     public void executeAndClearTodo(ServerWorld level) {
-        int todoSize = Config.TODO_QUEUE_SIZE.get();
+        int todoSize = Config.TODO_QUEUE_SIZE;
 
         // @todo process chunks based on their distance to the player
         Set<ChunkPos> todoToRemove = new HashSet<>();
