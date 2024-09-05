@@ -1,3 +1,5 @@
+package mcjty.lostcities;
+
 import net.fabricmc.api.ClientModInitializer;
 
 public class LostCitiesClient implements ClientModInitializer {

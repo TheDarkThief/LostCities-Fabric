@@ -132,12 +132,12 @@ public class CommandTestFill implements Command<ServerCommandSource> {
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int dy = -2; dy <= 2; dy++) {
-                    BlockPos p = pos.offset(dx, dy, dz);
+                    BlockPos p = pos.add(dx, dy, dz);
                     Block block = blocks[random.nextInt(blocks.length)];
-                    ImmutableList<BlockState> states = block.getStateDefinition().getPossibleStates();
+                    ImmutableList<BlockState> states = block.getStateManager().getStates();
                     BlockState state = states.get(random.nextInt(states.size()));
 
-                    world.setBlockState(p, state, Block.UPDATE_ALL);
+                    world.setBlockState(p, state, Block.NOTIFY_ALL);
                 }
             }
         }

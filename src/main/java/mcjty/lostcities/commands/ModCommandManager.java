@@ -43,7 +43,7 @@ public class ModCommandManager {
     static SuggestionProvider<ServerCommandSource> getPartSuggestionProvider() {
         return (context, builder) -> {
             Stream<BuildingPart> stream = StreamSupport.stream(AssetRegistries.PARTS.getIterable().spliterator(), false);
-            return CommandSource.suggestMatching.map(b -> b.getId().toString()), builder);
+            return CommandSource.suggestMatching.map((b -> b.getId().toString()), builder);
         };
     }
 
@@ -51,7 +51,7 @@ public class ModCommandManager {
     static SuggestionProvider<ServerCommandSource> getBuildingSuggestionProvider() {
         return (context, builder) -> {
             Stream<Building> stream = StreamSupport.stream(AssetRegistries.BUILDINGS.getIterable().spliterator(), false);
-            return CommandSource.suggestMatching.map(b -> b.getId().toString()), builder);
+            return CommandSource.suggestMatching.map((b -> b.getId().toString()), builder);
         };
     }
 }
