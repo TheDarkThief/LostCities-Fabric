@@ -395,7 +395,7 @@ public class LostCityTerrainFeature {
             boolean couldBeUnknown = false;
             for (int dx = -1 ; dx <= 1 ; dx++) {
                 for (int dz = -1 ; dz <= 1 ; dz++) {
-                    if (level.hasChunk(chunkX + dx, chunkZ + dz)) {
+                    if (level.isChunkLoaded(chunkX + dx, chunkZ + dz)) {
                         Chunk ch = level.getChunk(chunkX + dx, chunkZ + dx, ChunkStatus.STRUCTURE_REFERENCES);
                         if (testBlacklistedStructure(level, ch, chunkX == 0 && chunkZ == 0)) {
                             return (dx == 0 && dz == 0) ? AvoidChunk.YES : AvoidChunk.ADJACENT;
@@ -409,7 +409,7 @@ public class LostCityTerrainFeature {
                 }
             }
         } else {
-            if (level.hasChunk(chunkX, chunkZ)) {
+            if (level.isChunkLoaded(chunkX, chunkZ)) {
                 Chunk ch = level.getChunk(chunkX, chunkZ, ChunkStatus.STRUCTURE_REFERENCES);
                 return testBlacklistedStructure(level, ch, true) ? AvoidChunk.YES : AvoidChunk.NO;
             } else {
@@ -1809,7 +1809,7 @@ public class LostCityTerrainFeature {
                     new BuildingInfo.ConditionTodo(mobid, part.getName(), info), pos);
             NbtCompound sd = new NbtCompound();
             sd.putString("id", randomValue.toString());
-            MobSpawnerEntry data = new MobSpawnerEntry(sd, Optional.empty());
+            MobSpawnerEntry data = new MobSpawnerEntry(sd, Optional.empty(), Optional.empty());
             tag.put("SpawnData", MobSpawnerEntry.CODEC.encodeStart(NbtOps.INSTANCE, data).result().orElseThrow(() -> new IllegalStateException("Invalid SpawnData")));
 
             world.getChunk(pos).addPendingBlockEntityNbt(tag);

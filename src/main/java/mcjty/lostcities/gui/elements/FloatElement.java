@@ -61,10 +61,6 @@ public class FloatElement extends GuiElement {
         return this;
     }
 
-    @Override
-    public void tick() {
-        field.tick();
-    }
 
     @Override
     public void render(DrawContext graphics) {

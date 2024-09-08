@@ -18,7 +18,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ChunkInfoData extends PersistentState {
@@ -27,7 +27,7 @@ public class ChunkInfoData extends PersistentState {
 
     private final Map<ChunkCoord, List<LostChunkCharacteristics>> chunkData = new HashMap<>();
 
-    @Nonnull
+    @NotNull
     public static ChunkInfoData getData() {
         ServerWorld overworld = WorldTools.getOverworld();
         PersistentStateManager storage = overworld.getDataStorage();
