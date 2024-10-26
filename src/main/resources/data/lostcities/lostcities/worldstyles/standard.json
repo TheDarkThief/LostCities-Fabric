@@ -9,15 +9,9 @@
   },
   "scattered": {
     "areasize": 8,
-    "chance": 0.1,
-    "weightnone": 20,
+    "chance": 0.05,
+    "weightnone": 30,
     "list": [
-      {
-        "name": "gasstation",
-        "weight": 20,
-        "maxheightdiff": 30,
-        "nearhighway": true
-      },
       {
         "name": "radiotower",
         "weight": 15,
@@ -32,7 +26,7 @@
       },
       {
         "name": "oilrig",
-        "weight": 1,
+        "weight": 2,
         "maxheightdiff": 100,
         "biomes": {
           "if_any": [
