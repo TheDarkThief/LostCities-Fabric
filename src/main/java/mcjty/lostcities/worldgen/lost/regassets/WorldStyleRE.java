@@ -16,6 +16,7 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
             instance.group(
                     Codec.STRING.fieldOf("outsidestyle").forGetter(l -> l.outsideStyle),
                     MultiSettings.CODEC.optionalFieldOf("multisettings").forGetter(l -> l.multiSettings.get()),
+                    WorldSettings.CODEC.optionalFieldOf("settings").forGetter(l -> l.worldSettings.get()),
                     CitySphereSettings.CODEC.optionalFieldOf("cityspheres").forGetter(l -> Optional.ofNullable(l.citysphereSettings)),
                     ScatteredSettings.CODEC.optionalFieldOf("scattered").forGetter(l -> Optional.ofNullable(l.scatteredSettings)),
                     PartSelector.CODEC.optionalFieldOf("parts").forGetter(l -> l.partSelector.get()),
@@ -26,6 +27,7 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
     private ResourceLocation name;
     private final String outsideStyle;
     private final MultiSettings multiSettings;
+    private final WorldSettings worldSettings;
     private final ScatteredSettings scatteredSettings;
     private final CitySphereSettings citysphereSettings;
     @Nonnull private final PartSelector partSelector;
@@ -34,6 +36,7 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
 
     public WorldStyleRE(String outsideStyle,
                         Optional<MultiSettings> multiSettings,
+                        Optional<WorldSettings> worldSettings,
                         Optional<CitySphereSettings> citysphereSettings,
                         Optional<ScatteredSettings> scatteredSettings,
                         Optional<PartSelector> partSelector,
@@ -41,6 +44,7 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
                         Optional<List<CityBiomeMultiplier>> cityBiomeMultipliers) {
         this.outsideStyle = outsideStyle;
         this.multiSettings = multiSettings.orElse(MultiSettings.DEFAULT);
+        this.worldSettings = worldSettings.orElse(WorldSettings.DEFAULT);
         this.citysphereSettings = citysphereSettings.orElse(null);
         this.scatteredSettings = scatteredSettings.orElse(null);
         this.partSelector = partSelector.orElse(PartSelector.DEFAULT);
@@ -74,8 +78,14 @@ public class WorldStyleRE implements IAsset<WorldStyleRE> {
         return cityBiomeMultipliers;
     }
 
+    @Nonnull
     public MultiSettings getMultiSettings() {
         return multiSettings;
+    }
+
+    @Nonnull
+    public WorldSettings getWorldSettings() {
+        return worldSettings;
     }
 
     @Override

@@ -4,6 +4,7 @@ Upcoming:
 - New locate command to locate a building. This command also works if edit mode is not enabled
 - Slightly reduced multibuilding chances
 - Slightly reduced scattered building chances
+- Added a new 'settings' block to the world style. Currently only contains the new 'railwayavoidance' with as two options: 'ignore' and 'block_railway' ('ignore' is currently default). With 'block_railway' railways will not generate if a building has a lot of cellars and it would intersect the railway. i.e. buildings have priority over railways
 
 1.20-7.3.2:
 - Now also avoid pillager outposts with the avoidStructures option
