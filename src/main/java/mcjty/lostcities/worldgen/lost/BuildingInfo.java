@@ -788,11 +788,17 @@ public class BuildingInfo implements ILostChunkInfo {
             int maxcellars = getMaxcellars(cs);
             int mincellars = Math.max(profile.BUILDING_MINCELLARS, buildingType.getMinCellars());
             int fb = mincellars + ((maxcellars <= 0) ? 0 : rand.nextInt(maxcellars + 1));
-            if (getMaxHighwayLevel() >= 0 || getRailInfo() != Railway.RailChunkInfo.NOTHING) {
+            boolean checkHighway = getMaxHighwayLevel() >= 0;
+            boolean checkRailway = avoidance != WorldSettings.RailwayAvoidance.BLOCK_RAILWAY && getRailInfo() != Railway.RailChunkInfo.NOTHING;
+            if (checkHighway || checkRailway) {
                 // If we are above a highway or railway we make sure we can't have too many cellars
-                int maxUnder = getMaxHighwayLevel();
-                if (avoidance != WorldSettings.RailwayAvoidance.BLOCK_RAILWAY && getRailInfo() != Railway.RailChunkInfo.NOTHING) {
-                    maxUnder = Math.max(maxUnder, getRailInfo().getLevel());
+                int maxUnder;
+                if (checkRailway && checkHighway) {
+                    maxUnder = Math.max(getMaxHighwayLevel(), getRailInfo().getLevel());
+                } else if (checkRailway) {
+                    maxUnder = getRailInfo().getLevel();
+                } else {
+                    maxUnder = getMaxHighwayLevel();
                 }
 
                 fb = Math.min(cityLevel - maxUnder - 1, fb);

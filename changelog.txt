@@ -1,3 +1,6 @@
+1.20-7.3.4:
+- Fixed a bug with cellars
+
 1.20-7.3.3:
 - Fixed a bug where scattered multibuildings would sometimes only generate partially
 - Extended the range of the locatepart command (from max 15 chunk distance to 30)
