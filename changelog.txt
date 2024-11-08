@@ -1,3 +1,7 @@
+1.20-7.3.5:
+- Fixed maxfloors not being honored completely. It was possible for buildings to go to maxfloors+1
+- Multibuildings will now override structures no matter what. This had to be done because otherwise multibuildings could sometimes generate partially
+
 1.20-7.3.4:
 - Fixed a bug with cellars
 

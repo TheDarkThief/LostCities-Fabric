@@ -762,8 +762,8 @@ public class BuildingInfo implements ILostChunkInfo {
             int maxfloors = getMaxfloors(cs);
             int f = profile.BUILDING_MINFLOORS + rand.nextInt((int) (profile.BUILDING_MINFLOORS_CHANCE + (cityFactor + .1f) * (profile.BUILDING_MAXFLOORS_CHANCE - profile.BUILDING_MINFLOORS_CHANCE)));
             f++;
-            if (f > maxfloors + 1) {
-                f = maxfloors + 1;
+            if (f > maxfloors) {
+                f = maxfloors;
             }
             int minfloors = getMinfloors(cs);
             if (f < minfloors) {
