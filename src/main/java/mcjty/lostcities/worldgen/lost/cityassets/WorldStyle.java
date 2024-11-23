@@ -29,7 +29,8 @@ public class WorldStyle implements ILostCityAsset {
     @NotNull private final PartSelector partSelector;
     private final List<Pair<Predicate<RegistryEntry<Biome>>, Pair<Float, String>>> cityStyleSelector = new ArrayList<>();
     private final List<Pair<Predicate<RegistryEntry<Biome>>, Float>> cityBiomeMultiplier = new ArrayList<>();
-    private final MultiSettings multiSettings;
+    @NotNull private final MultiSettings multiSettings;
+    @NotNull private final WorldSettings worldSettings;
 
     public WorldStyle(WorldStyleRE object) {
         name = object.getRegistryName();
@@ -37,6 +38,7 @@ public class WorldStyle implements ILostCityAsset {
         this.scatteredSettings = object.getScatteredSettings();
         this.partSelector = object.getPartSelector();
         this.multiSettings = object.getMultiSettings();
+        this.worldSettings = object.getWorldSettings();
         outsideStyle = object.getOutsideStyle();
         for (CityStyleSelector selector : object.getCityStyleSelectors()) {
             Predicate<RegistryEntry<Biome>> predicate = biomeRegistryEntry -> true;
@@ -80,8 +82,14 @@ public class WorldStyle implements ILostCityAsset {
         return scatteredSettings;
     }
 
+    @Nonnull
     public MultiSettings getMultiSettings() {
         return multiSettings;
+    }
+
+    @Nonnull
+    public WorldSettings getWorldSettings() {
+        return worldSettings;
     }
 
     public float getCityChanceMultiplier(IDimensionInfo provider, ChunkCoord coord) {

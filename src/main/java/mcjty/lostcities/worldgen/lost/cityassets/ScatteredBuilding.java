@@ -66,8 +66,7 @@ public class ScatteredBuilding implements ILostCityAsset {
         LOWEST("lowest"),
         AVERAGE("average"),
         HIGHEST("highest"),
-        OCEAN("ocean"),
-        HIGHWAY("highway")
+        OCEAN("ocean")
         ;
 
         private static final Map<String, TerrainHeight> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(TerrainHeight::asString, (v) -> v));

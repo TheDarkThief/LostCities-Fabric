@@ -1,8 +1,17 @@
-Upcoming:
+1.20-7.3.5:
+- Fixed maxfloors not being honored completely. It was possible for buildings to go to maxfloors+1
+- Multibuildings will now override structures no matter what. This had to be done because otherwise multibuildings could sometimes generate partially
+
+1.20-7.3.4:
+- Fixed a bug with cellars
+
+1.20-7.3.3:
 - Fixed a bug where scattered multibuildings would sometimes only generate partially
 - Extended the range of the locatepart command (from max 15 chunk distance to 30)
 - New locate command to locate a building. This command also works if edit mode is not enabled
-- Slighty reduced multibuilding chances
+- Slightly reduced multibuilding chances
+- Slightly reduced scattered building chances
+- Added a new 'settings' block to the world style. Currently only contains the new 'railwayavoidance' with as two options: 'ignore' and 'block_railway' ('ignore' is currently default). With 'block_railway' railways will not generate if a building has a lot of cellars and it would intersect the railway. i.e. buildings have priority over railways
 
 1.20-7.3.2:
 - Now also avoid pillager outposts with the avoidStructures option

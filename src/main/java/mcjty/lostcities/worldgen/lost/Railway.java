@@ -7,6 +7,7 @@ import mcjty.lostcities.varia.QualityRandom;
 import mcjty.lostcities.worldgen.IDimensionInfo;
 import mcjty.lostcities.worldgen.lost.regassets.data.RailwayParts;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ public class Railway {
         }
     }
 
-    private static final Map<ChunkCoord, RailChunkInfo> RAIL_INFO = new HashMap<>();
+    private static final Map<ChunkCoord, RailChunkInfo> RAIL_INFO = Collections.synchronizedMap(new HashMap<>());
 
     public static void cleanCache() {
         RAIL_INFO.clear();
@@ -336,6 +337,10 @@ public class Railway {
         }
         RAIL_INFO.put(coord, info);
         return info;
+    }
+
+    public static void removeRailChunkType(ChunkCoord coord) {
+        RAIL_INFO.put(coord, RailChunkInfo.NOTHING);
     }
 
     private static RailChunkInfo testAdjacentRailChunk(float r, RailChunkInfo adjacent, RailDirection direction, ChunkCoord coord, IDimensionInfo provider, LostCityProfile profile) {

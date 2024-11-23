@@ -23,7 +23,7 @@ public class MultiChunk {
     record MB(String name, int offsetX, int offsetZ) {}
 
     // Multichunks are indexed by the chunk coordinates divided by the area size
-    private static final Map<ChunkCoord, MultiChunk> MULTICHUNKS = new HashMap<>();
+    private static final Map<ChunkCoord, MultiChunk> MULTICHUNKS = Collections.synchronizedMap(new HashMap<>());
     public static void cleanCache() {
         MULTICHUNKS.clear();
     }

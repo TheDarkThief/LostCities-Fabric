@@ -295,12 +295,15 @@ public class LostCityTerrainFeature {
 
         boolean doCity = info.isCity || (info.outsideChunk && info.hasBuilding);
 
-        // Check if there is no village or other structure here
-        AvoidChunk avoidChunk = hasBlacklistedStructure(region, chunkX, chunkZ);
-        if (avoidChunk != AvoidChunk.NO) {
-            doCity = false;
-            info.isCity = false;
-            BuildingInfo.setCityRaw(coord, provider, false);
+        // Check if there is no village or other structure here. We don't do this for multibuildings because otherwise part of the multibuilding might be cut off
+        AvoidChunk avoidChunk = AvoidChunk.NO;
+        if (!info.multiBuildingPos.isMulti()) {
+            avoidChunk = hasBlacklistedStructure(region, chunkX, chunkZ);
+            if (avoidChunk != AvoidChunk.NO) {
+                doCity = false;
+                info.isCity = false;
+                BuildingInfo.setCityRaw(coord, provider, false);
+            }
         }
 
         // If this chunk has a building or street but we're in a floating profile and

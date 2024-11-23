@@ -16,6 +16,7 @@ import mcjty.lostcities.worldgen.lost.cityassets.*;
 import mcjty.lostcities.worldgen.lost.regassets.data.CitySphereSettings;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedBuilding;
 import mcjty.lostcities.worldgen.lost.regassets.data.PredefinedStreet;
+import mcjty.lostcities.worldgen.lost.regassets.data.WorldSettings;
 import net.minecraft.util.math.BlockPos;
 
 import net.minecraft.registry.entry.RegistryEntry;
@@ -456,7 +457,6 @@ public class BuildingInfo implements ILostChunkInfo {
     private static boolean checkBuildingPossibility(ChunkCoord coord, IDimensionInfo provider, LostCityProfile profile, MultiPos section, int cityLevel, Random rand) {
         boolean b;
         float bc = rand.nextFloat();
-        RegistryKey<World> type = provider.getType();
 
         PredefinedBuilding predefinedBuilding = City.getPredefinedBuildingAtTopLeft(coord);
         if (predefinedBuilding != null) {
@@ -492,7 +492,7 @@ public class BuildingInfo implements ILostChunkInfo {
                 b = false;  // No building directly above the underground station
             } else {
                 int maxh = info.getWorld();
-                b = cityLevel > maxh + 1;       // Allow a building if it is higher then the maximum railway + one
+                b = cityLevel > maxh + 1;       // Allow a building if it is higher than the maximum railway + one
                 // Later we will take care to make sure we don't have too many cellars
                 // Note that for easy of coding we still disallow multi-buildings above railways
             }
@@ -730,6 +730,7 @@ public class BuildingInfo implements ILostChunkInfo {
             wl = provider.getProfile().SEALEVEL;
         }
         waterLevel = wl == -1 ? Tools.getSeaLevel(provider.getWorld()) : wl;
+        WorldSettings.RailwayAvoidance avoidance = provider.getWorldStyle().getWorldSettings().railwayAvoidance();
 
         CityStyle cs = (CityStyle) characteristics.cityStyle;
 
@@ -772,8 +773,8 @@ public class BuildingInfo implements ILostChunkInfo {
             int maxfloors = getMaxfloors(cs);
             int f = profile.BUILDING_MINFLOORS + rand.nextInt((int) (profile.BUILDING_MINFLOORS_CHANCE + (cityFactor + .1f) * (profile.BUILDING_MAXFLOORS_CHANCE - profile.BUILDING_MINFLOORS_CHANCE)));
             f++;
-            if (f > maxfloors + 1) {
-                f = maxfloors + 1;
+            if (f > maxfloors) {
+                f = maxfloors;
             }
             int minfloors = getMinfloors(cs);
             if (f < minfloors) {
@@ -798,9 +799,20 @@ public class BuildingInfo implements ILostChunkInfo {
             int maxcellars = getMaxcellars(cs);
             int mincellars = Math.max(profile.BUILDING_MINCELLARS, buildingType.getMinCellars());
             int fb = mincellars + ((maxcellars <= 0) ? 0 : rand.nextInt(maxcellars + 1));
-            if (getMaxHighwayLevel() >= 0) {
-                // If we are above a highway we make sure we can't have too many cellars
-                fb = Math.min(cityLevel - getMaxHighwayLevel() - 1, fb);
+            boolean checkHighway = getMaxHighwayLevel() >= 0;
+            boolean checkRailway = avoidance != WorldSettings.RailwayAvoidance.BLOCK_RAILWAY && getRailInfo() != Railway.RailChunkInfo.NOTHING;
+            if (checkHighway || checkRailway) {
+                // If we are above a highway or railway we make sure we can't have too many cellars
+                int maxUnder;
+                if (checkRailway && checkHighway) {
+                    maxUnder = Math.max(getMaxHighwayLevel(), getRailInfo().getLevel());
+                } else if (checkRailway) {
+                    maxUnder = getRailInfo().getLevel();
+                } else {
+                    maxUnder = getMaxHighwayLevel();
+                }
+
+                fb = Math.min(cityLevel - maxUnder - 1, fb);
                 if (fb < 0) {
                     fb = 0;
                 }
@@ -822,6 +834,18 @@ public class BuildingInfo implements ILostChunkInfo {
                 ruinHeight = profile.RUIN_MINLEVEL_PERCENT + (profile.RUIN_MAXLEVEL_PERCENT - profile.RUIN_MINLEVEL_PERCENT) * r;
             } else {
                 ruinHeight = -1;
+            }
+        }
+
+        // Check railway/building collision
+        if (avoidance == WorldSettings.RailwayAvoidance.BLOCK_RAILWAY && hasBuilding) {
+            Railway.RailChunkInfo railInfo = getRailInfo();
+            if (railInfo != Railway.RailChunkInfo.NOTHING) {
+                int lowestLevel = cityLevel - cellars;
+                if (lowestLevel <= railInfo.getLevel()) {
+                    // There is a collision
+                    Railway.removeRailChunkType(coord);
+                }
             }
         }
 
@@ -1391,13 +1415,7 @@ public class BuildingInfo implements ILostChunkInfo {
     }
 
     public static Random getBuildingRandom(int chunkX, int chunkZ, long seed) {
-        QualityRandom random = new QualityRandom(seed + chunkZ * 341873128712L + chunkX * 132897987541L);
-        return random;
-    }
-
-    public static Random getMultiBuildingRandom(int chunkX, int chunkZ, long seed) {
-        QualityRandom random = new QualityRandom(seed + chunkZ * 8987899751L + chunkX * 189878980451L);
-        return random;
+        return new QualityRandom(seed + chunkZ * 341873128712L + chunkX * 132897987541L);
     }
 
     // Convert a local building level to a global one (where cityLevel == 0)
