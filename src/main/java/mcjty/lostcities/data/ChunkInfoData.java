@@ -81,7 +81,7 @@ public class ChunkInfoData extends PersistentState {
     // @todo
     public void addPartData(ChunkCoord pos, int y, String partName) {
         chunkData.computeIfAbsent(pos, p -> new ArrayList<>()).add(new LostChunkCharacteristics());
-        setDirty();
+        setDirty(true);
     }
 
     public List<LostChunkCharacteristics> getChunkData(ChunkCoord pos) {

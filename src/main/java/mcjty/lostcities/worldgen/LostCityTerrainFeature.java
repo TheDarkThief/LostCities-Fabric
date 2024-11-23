@@ -1894,7 +1894,7 @@ public class LostCityTerrainFeature {
 
             @Override
             public Identifier getBiome() {
-                return world.getBiome(pos).getKey().map(RegistryKey::getRegistry, biome -> world.registryAccess().get(RegistryKeys.BIOME).getKey(biome));
+                return world.getBiome(pos).getKeyOrValue().map(RegistryKey::getRegistry, biome -> world.getRegistryManager().get(RegistryKeys.BIOME).getId(biome));
             }
         };
         String randomValue = cnd.getRandomValue(random, conditionContext);
@@ -1935,7 +1935,7 @@ public class LostCityTerrainFeature {
 
                     @Override
                     public Identifier getBiome() {
-                        return world.getBiome(pos).getKey().map(RegistryKey::getRegistryRef, biome -> world.registryAccess().get(RegistryKeys.BIOME).getKey(biome));
+                        return world.getBiome(pos).getKeyOrValue().map(RegistryKey::getRegistry, biome -> world.getRegistryManager().get(RegistryKeys.BIOME).getId(biome));
                 
                     }
                 };

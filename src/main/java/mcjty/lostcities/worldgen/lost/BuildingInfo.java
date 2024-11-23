@@ -656,8 +656,7 @@ public class BuildingInfo implements ILostChunkInfo {
                 @Override
                 public Identifier getBiome() {
                     RegistryEntry<Biome> biome = provider.getWorld().getBiome(getCenter(0));
-                    return biome.getKeyOrValue().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().get(RegistryKeys.BIOME).getDefaultEntry().orElseThrow().getKey(b));
-
+                    return biome.getKeyOrValue().map(RegistryKey::getRegistry, b -> provider.getWorld().getRegistryManager().getOptional(RegistryKeys.BIOME).orElseThrow().getId(b));
                 }
             };
             String randomPart = building.getRandomPart(rand, conditionContext);
@@ -847,8 +846,8 @@ public class BuildingInfo implements ILostChunkInfo {
                 @Override
                 public Identifier getBiome() {
                     RegistryEntry<Biome> biome = provider.getWorld().getBiome(getCenter(0));
-                    //return biome.unwrap().map(RegistryKey::getValue, b -> provider.getWorld().registryAccess().registry(RegistryKeys.BIOME).orElseThrow().getKey(b));
-                    return biome.getKeyOrValue().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().getOptional(RegistryKeys.BIOME).orElseThrow().getKey(b));
+                    //return biome.unwrap().map(RegistryKey::getValue, b -> provider.getWorld().getRegistryManager().registry(RegistryKeys.BIOME).orElseThrow().getKey(b));
+                    return biome.getKeyOrValue().map(RegistryKey::getRegistry, b -> provider.getWorld().getRegistryManager().getOptional(RegistryKeys.BIOME).orElseThrow().getId(b));
                 }
             };
             String randomPart = building.getRandomPart(rand, conditionContext);

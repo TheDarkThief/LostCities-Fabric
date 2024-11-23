@@ -113,7 +113,7 @@ public class NullDimensionInfo implements IDimensionInfo {
         feature = new LostCityTerrainFeature(this, profile, Random);
         feature.setupStates(profile);
         // @todo 1.19.3
-//        biomeRegistry = ServerLifecycleHooks.getCurrentServer().registryAccess().get(RegistryKeys.BIOME);
+//        biomeRegistry = ServerLifecycleHooks.getCurrentServer().getRegistryManager().get(RegistryKeys.BIOME);
 //        biomeRegistry = RegistryAccess.builtinCopy().registry(Registry.BIOME_REGISTRY).get();
         biomeRegistry = null;
     }

@@ -24,14 +24,12 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.biome.Biome;
-import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents.AllowSleepTime;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarting;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStopping;
+
 import net.minecraft.block.AbstractSkullBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
@@ -39,6 +37,10 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.BlockState;
 import net.minecraft.world.level.ServerWorldProperties;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarting;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStopping;
+import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandManagerEvent;
@@ -66,6 +68,7 @@ public class FabricEventHandlers {
     public void bindEvets(){
         ServerLifecycleEvents.SERVER_STARTED.register(FabricEventHandlers::onServerStarting);
         ServerLifecycleEvents.SERVER_STOPPING.register(FabricEventHandlers::onServerStopping);
+        EntitySleepEvents.START_SLEEPING.register(FabricEventHandlers::onPlayerSleepInBedEvent);
     }
 
     public 
@@ -392,34 +395,35 @@ public class FabricEventHandlers {
         return bestSpot;
     }
 
-    @SubscribeEvent
-    public void onPlayerSleepInBedEvent(PlayerSleepInBedEvent event) {
+
+    public void onPlayerSleepInBedEvent(LivingEntity entitySleeping, BlockPos pos) {
 //        if (LostCityConfiguration.DIMENSION_ID == null) {
 //            return;
 //        }
+        if(entitySleeping instanceof PlayerEntity){
+            World world = entitySleeping.getWorld();
+            if (world.isClient) {
+                return;
+            }
+            BlockPos bedLocation = pos;
+            if (bedLocation == null || !isValidSpawnBed(world, bedLocation)) {
+                return;
+            }
 
-        World world = event.getEntity().getCommandSenderWorld();
-        if (world.isClient) {
-            return;
-        }
-        BlockPos bedLocation = event.getPos();
-        if (bedLocation == null || !isValidSpawnBed(world, bedLocation)) {
-            return;
-        }
-
-        if (world.getRegistryKey() == Registration.DIMENSION) {
-            event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
-            ServerWorld destWorld = WorldTools.getOverworld(world);
-            BlockPos location = findLocation(bedLocation, destWorld);
-            CustomTeleporter.teleportToDimension(event.getEntity(), destWorld, location);
-        } else {
-            event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
-            ServerWorld destWorld = event.getEntity().getCommandSenderWorld().getServer().getWorld(Registration.DIMENSION);
-            if (destWorld == null) {
-                event.getEntity().sendSystemMessage(TextFactory.literal("Error finding Lost City dimension: " + LOSTCITY + "!").formatted(Formatting.RED));
-            } else {
+            if (world.getRegistryKey() == Registration.DIMENSION) {
+                //event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
+                ServerWorld destWorld = WorldTools.getOverworld(world);
                 BlockPos location = findLocation(bedLocation, destWorld);
-                CustomTeleporter.teleportToDimension(event.getEntity(), destWorld, location);
+                CustomTeleporter.teleportToDimension((PlayerEntity)entitySleeping, destWorld, location);
+            } else {
+                //event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
+                ServerWorld destWorld = entitySleeping.getWorld().getServer().getWorld(Registration.DIMENSION);
+                if (destWorld == null) {
+                    ((PlayerEntity)entitySleeping).sendMessage(TextFactory.literal("Error finding Lost City dimension: " + LOSTCITY + "!").formatted(Formatting.RED));
+                } else {
+                    BlockPos location = findLocation(bedLocation, destWorld);
+                    CustomTeleporter.teleportToDimension((PlayerEntity)entitySleeping, destWorld, location);
+                }
             }
         }
     }

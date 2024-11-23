@@ -227,7 +227,7 @@ public class Scattered {
                 @Override
                 public Identifier getBiome() {
                     RegistryEntry<Biome> biome = provider.getWorld().getBiome(info.getCenter(0));
-                    return biome.getKey().map(RegistryKey::getValue, b -> provider.getWorld().registryAccess().registryOrThrow(Registries.BIOME).getKey(b));
+                    return biome.getKey().map(RegistryKey::getRegistry, b -> provider.getWorld().getRegistryManager().registryOrThrow(Registries.BIOME).getId(b));
                 }
             };
             ChunkDriver driver = feature.driver;
