@@ -1,5 +1,8 @@
 {
   "outsidestyle": "outside",
+  "settings": {
+    "railwayavoidance": "ignore"
+  },
   "multisettings": {
     "areasize": 10,
     "minimum": 1,
@@ -9,15 +12,9 @@
   },
   "scattered": {
     "areasize": 8,
-    "chance": 0.1,
-    "weightnone": 20,
+    "chance": 0.02,
+    "weightnone": 30,
     "list": [
-      {
-        "name": "gasstation",
-        "weight": 20,
-        "maxheightdiff": 30,
-        "nearhighway": true
-      },
       {
         "name": "radiotower",
         "weight": 15,
@@ -32,7 +29,7 @@
       },
       {
         "name": "oilrig",
-        "weight": 1,
+        "weight": 4,
         "maxheightdiff": 100,
         "biomes": {
           "if_any": [
