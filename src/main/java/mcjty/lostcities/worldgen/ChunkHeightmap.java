@@ -22,7 +22,7 @@ public class ChunkHeightmap {
             return;
         }
 
-        if (type == LandscapeType.CAVERN) {
+        if (type == LandscapeType.CAVERN || type == LandscapeType.CAVERNSPHERES) {
             // Here we try to find the height inside the cavern itself. Ignoring the top layer
             int base = Math.max(groundLevel - 20, 1);
             if (y > 100 || y < base) {
@@ -36,6 +36,9 @@ public class ChunkHeightmap {
     }
 
     public int getHeight() {
+        if (height < -4000) {
+            return groundLevel;
+        }
         return height;
     }
 

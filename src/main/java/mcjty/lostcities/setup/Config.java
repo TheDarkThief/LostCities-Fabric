@@ -22,7 +22,8 @@ public class Config {
     public static ForgeConfigSpec.ConfigValue<String> SPECIAL_BED_BLOCK;// = "minecraft:diamond_block";
 
     private static final String[] DEFAULT_DIMENSION_PROFILES = new String[] {
-            "lostcities:lostcity=default"
+            "lostcities:lostcity=biosphere",
+            "lostworlds:abyss=biosphere_caves",
     };
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DIMENSION_PROFILES;
     private static Map<ResourceKey<Level>, String> dimensionProfileCache = null;
@@ -44,8 +45,9 @@ public class Config {
             "minecraft:pillager_outpost"
     };
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> AVOID_STRUCTURES;
-    private static final Set<ResourceLocation> AVOID_STRUCTURES_SET = new HashSet<>();
+    private static Set<ResourceLocation> AVOID_STRUCTURES_SET = null;
     public static final ForgeConfigSpec.BooleanValue AVOID_STRUCTURES_ADJACENT;
+    public static final ForgeConfigSpec.BooleanValue AVOID_VILLAGES;
     public static final ForgeConfigSpec.BooleanValue AVOID_VILLAGES_ADJACENT;
     public static final ForgeConfigSpec.BooleanValue AVOID_FLATTENING;
 
@@ -123,12 +125,22 @@ public class Config {
     }
 
     public static boolean isAvoidedStructure(ResourceLocation id) {
-        if (AVOID_STRUCTURES_SET.isEmpty()) {
+        cacheAvoidedStructures();
+        return AVOID_STRUCTURES_SET.contains(id);
+    }
+
+    public static boolean hasAvoidedStructures() {
+        cacheAvoidedStructures();
+        return !AVOID_STRUCTURES_SET.isEmpty();
+    }
+
+    private static void cacheAvoidedStructures() {
+        if (AVOID_STRUCTURES_SET == null) {
+            AVOID_STRUCTURES_SET = new HashSet<>();
             for (String s : AVOID_STRUCTURES.get()) {
                 AVOID_STRUCTURES_SET.add(new ResourceLocation(s));
             }
         }
-        return AVOID_STRUCTURES_SET.contains(id);
     }
 
     private static final ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
@@ -161,6 +173,9 @@ public class Config {
         AVOID_VILLAGES_ADJACENT = SERVER_BUILDER
                 .comment("If true then also avoid generating cities in chunks adjacent to the chunks with villages")
                 .define("avoidVillagesAdjacent", false);
+        AVOID_VILLAGES = SERVER_BUILDER
+                .comment("If true then avoid generating cities in chunks with villages")
+                .define("avoidVillages", true);
         AVOID_FLATTENING = SERVER_BUILDER
                 .comment("If true then avoid flattening the terrain around the city in case there was a structure that was avoided")
                 .define("avoidFlattening", true);

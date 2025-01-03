@@ -156,6 +156,49 @@ public class ProfileSetup {
 //        profile.GENERATE_LIGHTING = true;
 //        standardProfiles.put(profile.getName(), profile);
 
+        profile = new LostCityProfile("biosphere_caves", false);
+        profile.setDescription("Spheres in large caverns");
+        profile.setWarning("Use this in combination with the Lost Worlds 'cavespheres' world type");
+        profile.setIconFile("textures/gui/icon_cavespheres.png");
+        profile.LANDSCAPE_TYPE = LandscapeType.CAVERNSPHERES;
+        profile.HORIZON = 30;
+//        profile.ALLOWED_BIOME_FACTORS = new String[] { "jungle=1", "jungle_hills=1", "jungle_edge=2" };
+        profile.CITYSPHERE_MONORAIL_CHANCE = 0.0f;
+        profile.CITYSPHERE_OUTSIDE_PROFILE = "cavern";
+        profile.CITYSPHERE_OUTSIDE_SURFACE_VARIATION = 0.5f;
+//        profile.SPAWN_BIOME = "jungle";   // @todo
+        profile.SPAWN_SPHERE = "<in>";
+        profile.EXPLOSION_CHANCE = 0.0f;
+        profile.MINI_EXPLOSION_CHANCE = 0.01f;
+        profile.MINI_EXPLOSION_MINHEIGHT = 60;
+        profile.MINI_EXPLOSION_MAXHEIGHT = 75;
+        profile.MINI_EXPLOSION_MINRADIUS = 5;
+        profile.MINI_EXPLOSION_MAXRADIUS = 10;
+//        profile.WATERLEVEL_OFFSET = 70;
+        profile.RAILWAYS_CAN_END = true;
+        profile.RAILWAYS_ENABLED = false;
+        profile.RAILWAY_STATIONS_ENABLED = false;
+        profile.HIGHWAY_DISTANCE_MASK = 0;
+        profile.RUIN_CHANCE = 0.7f;
+        profile.RUIN_MINLEVEL_PERCENT = 0.3f;
+        profile.RUIN_MAXLEVEL_PERCENT = 0.8f;
+        profile.RUBBLELAYER = false;
+        profile.CITYSPHERE_CHANCE = 0.5f;
+        profile.CITYSPHERE_CLEARABOVE = 30;
+//        profile.CITY_CHANCE = 0.3f;       // @EXP
+        profile.CITY_CHANCE = 0.9f;
+
+        profile.CITY_MINRADIUS = 50;
+        profile.CITY_MAXRADIUS = 65;
+        profile.CITY_THRESHOLD = .05f;
+        profile.CITY_LEVEL0_HEIGHT = 60;
+        profile.CITY_LEVEL1_HEIGHT = 66;
+        profile.CITY_LEVEL2_HEIGHT = 72;
+        profile.CITY_LEVEL3_HEIGHT = 78;
+        profile.BUILDING_CHANCE = .3f;
+        profile.GENERATE_LIGHTING = true;
+        STANDARD_PROFILES.put(profile.getName(), profile);
+
         profile = new LostCityProfile("biosphere", true);
         profile.setDescription("Jungles in big glass bubbles on a barren landscape");
         profile.setWarning("Preferably use this in combination with the Lost Worlds 'normal' world type");

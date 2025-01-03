@@ -373,29 +373,31 @@ public class LostCityTerrainFeature {
 
     private static AvoidChunk hasBlacklistedStructure(WorldGenLevel level, int chunkX, int chunkZ) {
         boolean doAdjacent = Config.AVOID_VILLAGES_ADJACENT.get() || Config.AVOID_STRUCTURES_ADJACENT.get();
-        if (doAdjacent) {
-            boolean couldBeUnknown = false;
-            for (int dx = -1 ; dx <= 1 ; dx++) {
-                for (int dz = -1 ; dz <= 1 ; dz++) {
-                    if (level.hasChunk(chunkX + dx, chunkZ + dz)) {
-                        ChunkAccess ch = level.getChunk(chunkX + dx, chunkZ + dx, ChunkStatus.STRUCTURE_REFERENCES);
-                        if (testBlacklistedStructure(level, ch, chunkX == 0 && chunkZ == 0)) {
-                            return (dx == 0 && dz == 0) ? AvoidChunk.YES : AvoidChunk.ADJACENT;
+        if (doAdjacent || Config.AVOID_VILLAGES.get() || Config.hasAvoidedStructures()) {
+            if (doAdjacent) {
+                boolean couldBeUnknown = false;
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (level.hasChunk(chunkX + dx, chunkZ + dz)) {
+                            ChunkAccess ch = level.getChunk(chunkX + dx, chunkZ + dx, ChunkStatus.STRUCTURE_REFERENCES);
+                            if (testBlacklistedStructure(level, ch, chunkX == 0 && chunkZ == 0)) {
+                                return (dx == 0 && dz == 0) ? AvoidChunk.YES : AvoidChunk.ADJACENT;
+                            }
+                        } else {
+                            couldBeUnknown = true;
                         }
-                    } else {
-                        couldBeUnknown = true;
+                    }
+                    if (couldBeUnknown) {
+                        return AvoidChunk.NO;  // If we have unknown chunks we assume it is ok
                     }
                 }
-                if (couldBeUnknown) {
-                    return AvoidChunk.NO;  // If we have unknown chunks we assume it is ok
-                }
-            }
-        } else {
-            if (level.hasChunk(chunkX, chunkZ)) {
-                ChunkAccess ch = level.getChunk(chunkX, chunkZ, ChunkStatus.STRUCTURE_REFERENCES);
-                return testBlacklistedStructure(level, ch, true) ? AvoidChunk.YES : AvoidChunk.NO;
             } else {
-                return AvoidChunk.NO; // If we have unknown chunks we assume it is ok
+                if (level.hasChunk(chunkX, chunkZ)) {
+                    ChunkAccess ch = level.getChunk(chunkX, chunkZ, ChunkStatus.STRUCTURE_REFERENCES);
+                    return testBlacklistedStructure(level, ch, true) ? AvoidChunk.YES : AvoidChunk.NO;
+                } else {
+                    return AvoidChunk.NO; // If we have unknown chunks we assume it is ok
+                }
             }
         }
         return AvoidChunk.NO;
@@ -408,9 +410,11 @@ public class LostCityTerrainFeature {
             for (var entry : references.entrySet()) {
                 if (!entry.getValue().isEmpty()) {
                     Optional<ResourceKey<Structure>> key = structures.getResourceKey(entry.getKey());
-                    if (center || Config.AVOID_VILLAGES_ADJACENT.get()) {
-                        if (key.map(k -> structures.getHolderOrThrow(k).is(StructureTags.VILLAGE)).orElse(false)) {
-                            return true;
+                    if (Config.AVOID_VILLAGES.get()) {
+                        if (center || Config.AVOID_VILLAGES_ADJACENT.get()) {
+                            if (key.map(k -> structures.getHolderOrThrow(k).is(StructureTags.VILLAGE)).orElse(false)) {
+                                return true;
+                            }
                         }
                     }
                     if (center || Config.AVOID_STRUCTURES_ADJACENT.get()) {
@@ -454,7 +458,7 @@ public class LostCityTerrainFeature {
 
     private void doNormalChunk(BuildingInfo info, ChunkHeightmap heightmap, AvoidChunk avoidChunk) {
 //        debugClearChunk(chunkX, chunkZ, primer);
-        if ((avoidChunk != AvoidChunk.YES || !Config.AVOID_FLATTENING.get()) && (profile.isDefault() || profile.isSpheres())) {
+        if ((avoidChunk != AvoidChunk.YES || !Config.AVOID_FLATTENING.get()) && (profile.isDefault() || profile.isVoidSpheres())) {
             correctTerrainShape(provider.getWorld(), info.coord, heightmap);
 //            flattenChunkToCityBorder(chunkX, chunkZ);
         }
@@ -868,7 +872,7 @@ public class LostCityTerrainFeature {
     private void doCityChunk(BuildingInfo info, ChunkHeightmap heightmap) {
         boolean building = info.hasBuilding;
 
-        if (info.profile.isDefault() || info.profile.isSpheres()) {
+        if (info.profile.isDefault() || info.profile.isVoidSpheres()) {
             int minHeight = info.provider.getWorld().getMinBuildHeight();
             BlockState bedrock = Blocks.BEDROCK.defaultBlockState();
             for (int x = 0; x < 16; ++x) {
@@ -889,7 +893,7 @@ public class LostCityTerrainFeature {
 
         // City surface leveling - for prettier cities
         // Note: Better results may be achieved with terrain noise adjustment (like how newer structures do it)
-        if (profile.isDefault() || profile.isSpheres()) {
+        if (profile.isDefault() || profile.isVoidSpheres()) {
             int ground = info.getCityGroundLevel();
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
@@ -1232,6 +1236,7 @@ public class LostCityTerrainFeature {
             case DEFAULT -> fillToBedrockStreetBlock(info);
             case FLOATING -> fillMainStreetBlock(info, borderBlock, 3);
             case CAVERN -> fillMainStreetBlock(info, borderBlock, 2);
+            case CAVERNSPHERES -> fillMainStreetBlock(info, borderBlock, 2);
             case SPACE -> fillToGroundStreetBlock(info, info.getCityGroundLevel());
             case SPHERES -> fillToBedrockStreetBlock(info);
         }
@@ -1350,6 +1355,12 @@ public class LostCityTerrainFeature {
                 }
             }
             case CAVERN -> {
+                setBlocksFromPalette(x, info.getCityGroundLevel() - 2, z, info.getCityGroundLevel() + 1, info.getCompiledPalette(), borderBlock);
+                if (isCorner(x, z)) {
+                    generateBorderSupport(info, wall, x, z, 2, heightmap);
+                }
+            }
+            case CAVERNSPHERES -> {
                 setBlocksFromPalette(x, info.getCityGroundLevel() - 2, z, info.getCityGroundLevel() + 1, info.getCompiledPalette(), borderBlock);
                 if (isCorner(x, z)) {
                     generateBorderSupport(info, wall, x, z, 2, heightmap);
@@ -2072,7 +2083,7 @@ public class LostCityTerrainFeature {
         for (int f = -cellars; f <= floors; f++) {
             // In default landscape type we clear the landscape on top of the building when we are at the top floor
             if (f == floors) {
-                if (profile.isDefault() || profile.isSpheres()) {
+                if (profile.isDefault() || profile.isVoidSpheres()) {
                     clearToMax(info, heightmap, height, max);
                 }
             }

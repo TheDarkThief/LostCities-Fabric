@@ -214,7 +214,7 @@ public class ForgeEventHandlers {
                         event.setCanceled(true);
                     }
                 }
-                case FLOATING, SPACE, CAVERN -> {
+                case FLOATING, SPACE, CAVERN, CAVERNSPHERES -> {
                     BlockPos pos = findSafeSpawnPoint(serverLevel, dimensionInfo, isSuitable, event.getSettings());
                     event.getSettings().setSpawn(pos, 0.0f);
                     spawnPositions.put(serverLevel.dimension(), pos);

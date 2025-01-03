@@ -1,5 +1,6 @@
 package mcjty.lostcities.worldgen.gen;
 
+import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.varia.ChunkCoord;
 import mcjty.lostcities.varia.QualityRandom;
 import mcjty.lostcities.worldgen.ChunkDriver;
@@ -141,6 +142,14 @@ public class Scattered {
             }
             Building building = AssetRegistries.BUILDINGS.getOrThrow(provider.getWorld(), buildingName);
             int lowestLevel = handleScatteredTerrain(feature, scattered, info.coord, heightmap);
+            if (lowestLevel < -4000) {
+                LostCityProfile profile = feature.provider.getProfile();
+                if (profile.isCavern()) {
+                    lowestLevel = profile.GROUNDLEVEL;
+                } else {
+                    lowestLevel = provider.getWorld().getMinBuildHeight() + 2;  // @todo is this right?
+                }
+            }
             generateScatteredBuilding(feature, info, building, scatteredRandom, lowestLevel, scattered.getTerrainfix());
         } else {
             int lowestLevel = handleScatteredTerrainMulti(feature, scattered, info.coord, minheight, maxheight, avgheight);

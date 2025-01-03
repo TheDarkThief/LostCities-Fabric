@@ -520,10 +520,14 @@ public class LostCityProfile implements ILostCityProfile {
         return LANDSCAPE_TYPE == LandscapeType.SPACE;
     }
 
-    public boolean isCavern() { return LANDSCAPE_TYPE == LandscapeType.CAVERN; }
+    public boolean isCavern() { return LANDSCAPE_TYPE == LandscapeType.CAVERN || LANDSCAPE_TYPE == LandscapeType.CAVERNSPHERES; }
+
+    public boolean isVoidSpheres() {
+        return LANDSCAPE_TYPE == LandscapeType.SPHERES;
+    }
 
     public boolean isSpheres() {
-        return LANDSCAPE_TYPE == LandscapeType.SPHERES;
+        return LANDSCAPE_TYPE == LandscapeType.SPHERES || LANDSCAPE_TYPE == LandscapeType.CAVERNSPHERES;
     }
 
 
