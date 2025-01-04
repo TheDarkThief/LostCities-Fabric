@@ -1,6 +1,7 @@
 Upcoming:
 - New 'avoidVillages' config to avoid generating Lost Cities in chunks that have villages. Default set to true
 - New 'biosphere_caves' landscape type and profile to combine a cavern type world with spheres (for usage with Lost Worlds)
+- Fixed city level calculations for the new 'cavespheres' landscape type
 
 1.20-7.3.5:
 - Fixed maxfloors not being honored completely. It was possible for buildings to go to maxfloors+1

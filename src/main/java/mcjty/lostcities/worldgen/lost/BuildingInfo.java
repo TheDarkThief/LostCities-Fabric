@@ -1002,7 +1002,7 @@ public class BuildingInfo implements ILostChunkInfo {
             return CITY_LEVEL_CACHE.get(key);
         }
         int result;
-        if ((provider.getProfile().isSpace() || provider.getProfile().isSpheres())) {
+        if ((provider.getProfile().isSpace() || provider.getProfile().isVoidSpheres())) {
             result = getCityLevelSpace(key, provider);
         } else if (provider.getProfile().isFloating()) {
             result = getCityLevelFloating(key, provider);
