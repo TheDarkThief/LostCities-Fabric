@@ -80,7 +80,7 @@ public class Config {
                 if (split.length != 2) {
                     LostCities.getLogger().error("Bad format for config value: '{}'!", dp);
                 } else {
-                    ResourceKey<Level> dimensionType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(split[0]));
+                    ResourceKey<Level> dimensionType = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(split[0]));
                     String profileName = split[1];
                     LostCityProfile profile = ProfileSetup.STANDARD_PROFILES.get(profileName);
                     if (profile != null) {
@@ -141,7 +141,7 @@ public class Config {
         if (AVOID_STRUCTURES_SET == null) {
             AVOID_STRUCTURES_SET = new HashSet<>();
             for (String s : AVOID_STRUCTURES.get()) {
-                AVOID_STRUCTURES_SET.add(new ResourceLocation(s));
+                AVOID_STRUCTURES_SET.add(ResourceLocation.fromNamespaceAndPath(s));
             }
         }
     }

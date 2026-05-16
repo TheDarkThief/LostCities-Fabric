@@ -29,9 +29,9 @@ public class DataTools {
 
     public static ResourceLocation fromName(String name) {
         if (name.contains(":")) {
-            return new ResourceLocation(name);
+            return ResourceLocation.fromNamespaceAndPath(name);
         } else {
-            return new ResourceLocation(LostCities.MODID, name);
+            return ResourceLocation.fromNamespaceAndPath(LostCities.MODID, name);
         }
     }
 }

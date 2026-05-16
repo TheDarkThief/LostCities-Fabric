@@ -43,7 +43,7 @@ public class ResourceLocationMatcher implements Predicate<ResourceLocation> {
         }
     }
 
-    public static final ResourceLocationMatcher ANY = new ResourceLocationMatcher(Optional.empty(), Optional.empty()) {
+    public static final ResourceLocationMatcher ANY = ResourceLocation.fromNamespaceAndPathMatcher(Optional.empty(), Optional.empty()) {
         @Override
         public boolean test(ResourceLocation str) {
             return true;

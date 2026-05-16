@@ -1,105 +1,87 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        maven { url = 'https://plugins.gradle.org/m2/' }
-        maven { url = 'https://maven.firstdark.dev/releases' }
-        mavenCentral()
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'org.parchmentmc:librarian:1.+'
-        classpath 'com.hypherionmc.modutils:modpublisher:2.0.4'
-    }
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'maven-publish'
 }
 
-apply plugin: 'com.hypherionmc.modutils.modpublisher'
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-if (project.file('../gradletools.gradle').exists()) {
-    apply from: '../gradletools.gradle'
-} else {
-    apply from: 'https://raw.githubusercontent.com/McJtyMods/MultiWorkspace/1.20_tech/gradletools.gradle'
+version = project.mod_version
+group = project.maven_group
+
+repositories {
+	// Add repositories to retrieve artifacts from in here.
+	// You should only use this when depending on other mods because
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
 }
 
-group = "com.github.mcjty"
-archivesBaseName = "lostcities"
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+loom {
+	splitEnvironmentSourceSets()
 
-if (System.getenv('BUILD_NUMBER') != null) {
-    version += "-${System.getenv('BUILD_NUMBER')}"
-}
+	mods {
+		"lostcities" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
 
-repos()
-runs('lostcities')
-jars('lostcities')
-
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
 }
 
 dependencies {
-    mc()
-    jei()
-    top()
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	
 }
 
-modpublisher(['the-one-probe'], [], ['the-one-probe'], [], [])
+processResources {
+	def version = project.version
+	inputs.property "version", version
 
-task apiJar(type: Jar) {
-    classifier = "api"
-    from(sourceSets.main.output) {
-        include "mcjty/lostcities/api/**"
-    }
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
 }
 
-artifacts {
-    archives apiJar
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
 }
 
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from("LICENSE") {
+		rename { "${it}_$projectName"}
+	}
+}
+
+// configure the maven publication
 publishing {
-    publications.create('mavenJava', MavenPublication) {
-        from components.java
-        artifact apiJar
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
 
-        artifactId = project.archivesBaseName
-        pom {
-            name = 'LostCities'
-            description = 'Lost Cities'
-            scm {
-                url = 'https://github.com/McJtyMods/LostCities'
-                connection = 'scm:git:git@github.com:McJtyMods/LostCities.git'
-                developerConnection = 'scm:git:git@github.com:McJtyMods/LostCities.git'
-            }
-            issueManagement {
-                system = 'github'
-                url = 'https://github.com/McJtyMods/LostCities/issues'
-            }
-            licenses {
-                license {
-                    name = 'MIT'
-                    distribution = 'repo'
-                }
-            }
-            developers {
-                developer {
-                    id = 'McJty'
-                    name = 'McJty'
-                    roles = ['developer']
-                }
-            }
-        }
-    }
-    repositories {
-        if (System.getenv('local_maven') != null) {
-            maven {
-                name = 'local'
-                url = 'file://' + System.getenv('local_maven')
-            }
-        }
-    }
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
 }
-

@@ -31,10 +31,10 @@ public class BlockMatcher implements Predicate<BlockState> {
 
     private Predicate<BlockState> getStatePredicate(String matcher) {
         if (matcher.startsWith("#")) {
-            TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, new ResourceLocation(matcher.substring(1)));
+            TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(matcher.substring(1)));
             return state -> state.is(tagKey);
         } else {
-            Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(matcher));
+            Block b = ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath(matcher));
             return state -> state.getBlock() == b;
         }
     }
@@ -45,10 +45,10 @@ public class BlockMatcher implements Predicate<BlockState> {
 
     private Predicate<BlockState> getNotStatePredicate(String matcher) {
         if (matcher.startsWith("#")) {
-            TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, new ResourceLocation(matcher.substring(1)));
+            TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(matcher.substring(1)));
             return state -> !state.is(tagKey);
         } else {
-            Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(matcher));
+            Block b = ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath(matcher));
             return state -> state.getBlock() != b;
         }
     }

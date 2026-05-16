@@ -34,16 +34,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ServerLevelData;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -58,6 +49,8 @@ public class ForgeEventHandlers {
 
     private final Map<ResourceKey<Level>, BlockPos> spawnPositions = new HashMap<>();
 
+    public static void init(){}
+
     @SubscribeEvent
     public void commandRegister(RegisterCommandsEvent event) {
         ModCommands.register(event.getDispatcher());
@@ -67,7 +60,7 @@ public class ForgeEventHandlers {
     public void onEntityConstructing(AttachCapabilitiesEvent<Entity> event){
         if (event.getObject() instanceof Player) {
             if (!event.getObject().getCapability(PlayerProperties.PLAYER_SPAWN_SET).isPresent()) {
-                event.addCapability(new ResourceLocation(LostCities.MODID, "spawnset"), new PropertiesDispatcher());
+                event.addCapability(ResourceLocation.fromNamespaceAndPath(LostCities.MODID, "spawnset"), new PropertiesDispatcher());
             }
         }
     }
@@ -139,7 +132,7 @@ public class ForgeEventHandlers {
             boolean needsCheck = false;
 
             if (!profile.SPAWN_BIOME.isEmpty()) {
-                final Biome spawnBiome = ForgeRegistries.BIOMES.getValue(new ResourceLocation(profile.SPAWN_BIOME));
+                final Biome spawnBiome = ForgeRegistries.BIOMES.getValue(ResourceLocation.fromNamespaceAndPath(profile.SPAWN_BIOME));
                 if (spawnBiome == null) {
                     ModSetup.getLogger().error("Cannot find biome '{}' for the player to spawn in !", profile.SPAWN_BIOME);
                 } else {
@@ -323,7 +316,7 @@ public class ForgeEventHandlers {
         Direction direction = Blocks.BLACK_BED.getBedDirection(state, world, pos);
         Block b1 = world.getBlockState(pos.below()).getBlock();
         Block b2 = world.getBlockState(pos.relative(direction.getOpposite()).below()).getBlock();
-        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(Config.SPECIAL_BED_BLOCK.get()));
+        Block b = ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath(Config.SPECIAL_BED_BLOCK.get()));
         if (b1 != b || b2 != b) {
             return false;
         }

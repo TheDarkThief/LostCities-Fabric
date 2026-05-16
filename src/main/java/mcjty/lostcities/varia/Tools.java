@@ -70,7 +70,7 @@ public class Tools {
         }
 
         String converted = BlockStateData.upgradeBlock(s);
-        Block value = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(converted));
+        Block value = ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath(converted));
         if (value == null) {
             throw new RuntimeException("Cannot find block: '" + s + "'!");
         }

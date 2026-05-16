@@ -1970,7 +1970,7 @@ public class LostCityTerrainFeature {
         if (randomValue == null) {
             throw new RuntimeException("Condition '" + cnd.getName() + "' did not return a valid mob!");
         }
-        return new ResourceLocation(randomValue);
+        return ResourceLocation.fromNamespaceAndPath(randomValue);
     }
 
 
@@ -2008,12 +2008,12 @@ public class LostCityTerrainFeature {
                     }
                 };
                 String randomValue = AssetRegistries.CONDITIONS.getOrThrow(world, lootTable).getRandomValue(random, conditionContext);
-//                ((LockableLootTileEntity) tileentity).setLootTable(new ResourceLocation(randomValue), random.nextLong());
+//                ((LockableLootTileEntity) tileentity).setLootTable(ResourceLocation.fromNamespaceAndPath(randomValue), random.nextLong());
 //                tileentity.markDirty();
 //                if (LostCityConfiguration.DEBUG) {
 //                    LostCities.setup.getLogger().debug("createLootChest: loot=" + randomValue + " pos=" + pos.toString());
 //                }
-                RandomizableContainerBlockEntity.setLootTable(world, random, pos, new ResourceLocation(randomValue));
+                RandomizableContainerBlockEntity.setLootTable(world, random, pos, ResourceLocation.fromNamespaceAndPath(randomValue));
             }
         }
     }

@@ -40,7 +40,7 @@ public class EditModeData extends SavedData {
         ListTag data = nbt.getList("data", Tag.TAG_COMPOUND);
         for (Tag t : data) {
             CompoundTag pdTag = (CompoundTag) t;
-            ResourceKey<Level> level = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(pdTag.getString("level")));
+            ResourceKey<Level> level = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(pdTag.getString("level")));
             int chunkX = pdTag.getInt("x");
             int chunkZ = pdTag.getInt("z");
             ChunkCoord pos = new ChunkCoord(level, chunkX, chunkZ);
