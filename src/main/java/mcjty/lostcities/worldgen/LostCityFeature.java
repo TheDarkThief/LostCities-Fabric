@@ -3,8 +3,8 @@ package mcjty.lostcities.worldgen;
 import mcjty.lostcities.LostCities;
 import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.config.ProfileSetup;
-import mcjty.lostcities.setup.Config;
-import mcjty.lostcities.setup.ForgeEventHandlers;
+import mcjty.lostcities.setup.CitiesConfig;
+import mcjty.lostcities.setup.FabricEventHandlers;
 import mcjty.lostcities.worldgen.lost.cityassets.AssetRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
@@ -79,7 +79,7 @@ public class LostCityFeature extends Feature<NoneFeatureConfiguration> {
             cleanUp();
         }
         ResourceKey<Level> type = world.getLevel().dimension();
-        String profileName = Config.getProfileForDimension(type);
+        String profileName = CitiesConfig.getProfileForDimension(type);
         if (profileName != null) {
             if (!dimensionInfo.containsKey(type)) {
                 LostCityProfile profile = ProfileSetup.STANDARD_PROFILES.get(profileName);
@@ -97,7 +97,7 @@ public class LostCityFeature extends Feature<NoneFeatureConfiguration> {
 
     public void cleanUp() {
         LostCities.lostCitiesImp.cleanUp();
-        ForgeEventHandlers.cleanUp();
+        FabricEventHandlers.cleanUp();
         AssetRegistries.reset();
         dimensionInfo.clear();
         dimensionInfoDirtyCounter = globalDimensionInfoDirtyCounter;

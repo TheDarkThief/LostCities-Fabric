@@ -19,11 +19,13 @@ import mcjty.lostcities.worldgen.lost.cityassets.PredefinedSphere;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -32,11 +34,14 @@ import net.minecraft.world.level.block.AbstractSkullBlock;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 
 import javax.annotation.Nonnull;
+
+import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -45,11 +50,13 @@ import java.util.function.Predicate;
 
 import static mcjty.lostcities.setup.Registration.LOSTCITY;
 
-public class ForgeEventHandlers {
+public class FabricEventHandlers {
 
     private final Map<ResourceKey<Level>, BlockPos> spawnPositions = new HashMap<>();
 
-    public static void init(){}
+    public static void init(){
+        EntitySleepEvents.START_SLEEPING.register(FabricEventHandlers::onPlayerSleepInBedEvent);
+    }
 
     @SubscribeEvent
     public void commandRegister(RegisterCommandsEvent event) {
@@ -104,11 +111,11 @@ public class ForgeEventHandlers {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         cleanUp();
-        Config.reset();
+        CitiesConfig.reset();
     }
 
     public static void cleanUp() {
-        Config.resetProfileCache();
+        CitiesConfig.resetProfileCache();
         BuildingInfo.cleanCache();
         MultiChunk.cleanCache();
         Highway.cleanCache();
@@ -308,7 +315,7 @@ public class ForgeEventHandlers {
 //        return state.canOcclude();
     }
 
-    private boolean isValidSpawnBed(Level world, BlockPos pos) {
+    private static boolean isValidSpawnBed(Level world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         if (!(state.getBlock() instanceof BedBlock)) {
             return false;
@@ -316,7 +323,7 @@ public class ForgeEventHandlers {
         Direction direction = Blocks.BLACK_BED.getBedDirection(state, world, pos);
         Block b1 = world.getBlockState(pos.below()).getBlock();
         Block b2 = world.getBlockState(pos.relative(direction.getOpposite()).below()).getBlock();
-        Block b = ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath(Config.SPECIAL_BED_BLOCK.get()));
+        Block b = BuiltInRegistries.BLOCK.getValue(ResourceLocation.fromNamespaceAndPath(CitiesConfig.SPECIAL_BED_BLOCK.get()));
         if (b1 != b || b2 != b) {
             return false;
         }
@@ -402,17 +409,19 @@ public class ForgeEventHandlers {
         return bestSpot;
     }
 
-    @SubscribeEvent
-    public void onPlayerSleepInBedEvent(PlayerSleepInBedEvent event) {
+    
+    public static void onPlayerSleepInBedEvent(LivingEntity entity, BlockPos bedLocation) {
+        if(!(entity instanceof Player)){
+            return;
+        }
 //        if (LostCityConfiguration.DIMENSION_ID == null) {
 //            return;
 //        }
 
-        Level world = event.getEntity().getCommandSenderWorld();
+        Level world = entity.getCommandSenderWorld();
         if (world.isClientSide) {
             return;
         }
-        BlockPos bedLocation = event.getPos();
         if (bedLocation == null || !isValidSpawnBed(world, bedLocation)) {
             return;
         }

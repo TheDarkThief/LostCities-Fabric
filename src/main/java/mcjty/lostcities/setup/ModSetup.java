@@ -29,7 +29,7 @@ public class ModSetup {
     public void init() {
         PacketHandler.registerMessages("lostcities");
 
-        ForgeEventHandlers.init();
+        FabricEventHandlers.init();
         // @todo 1.14
 //        MinecraftForge.TERRAIN_GEN_BUS.register(new TerrainEventHandlers());
 

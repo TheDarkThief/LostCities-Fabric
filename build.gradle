@@ -12,6 +12,18 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
+
+	// Mod menu
+	maven {
+		name = "Terraformers"
+		url = "https://maven.terraformersmc.com/"
+	}
+
+	// OwO lib
+	maven { url 'https://maven.wispforest.io/releases/' }
+
+    // since owo 0.13.0, jitpack is required for kdl4j
+    maven { url 'https://jitpack.io' }
 }
 
 loom {
@@ -27,6 +39,8 @@ loom {
 }
 
 dependencies {
+	implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings loom.officialMojangMappings()
@@ -34,6 +48,14 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Mod Menu
+	modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
+
+	// OwO lib for config
+	annotationProcessor modImplementation("io.wispforest:owo-lib:${project.owo_version}")
+	modImplementation "io.wispforest:owo-lib:${project.owo_version}"
+    include "io.wispforest:owo-sentinel:${project.owo_version}"
 	
 }
 

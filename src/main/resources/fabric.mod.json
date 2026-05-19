@@ -21,7 +21,8 @@
 		],
 		"client": [
 			"mcjty.lostcities.client.LostCitiesClient"
-		]
+		],
+		"modmenu": [ "mcjty.lostcities.client.LostCitiesModMenuImpl" ]
 	},
 	"mixins": [
 		"lostcities.mixins.json",
@@ -35,5 +36,21 @@
 		"minecraft": "~1.21.1",
 		"java": ">=21",
 		"fabric-api": "*"
+	},
+
+	"custom": {
+		"modmenu": {
+		"links": {
+		},
+		"badges": [],
+		"parent": {
+			"id": "lostcities",
+			"name": "Lost Cities Fabric",
+			"description": "Lost Cities mod ported to fabric",
+			"icon": "assets/example-api-module-v1/parent_icon.png",
+			"badges": []
+		},
+		"update_checker": true
+		}
 	}
 }
